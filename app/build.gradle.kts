@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -11,6 +12,7 @@ android {
     defaultConfig {
         applicationId = "com.example.projectworkagd_battleshipgame"
         minSdk = 28
+        //noinspection OldTargetApi
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -56,4 +58,8 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+    implementation (platform(libs.google.firebase.bom))
+    implementation (libs.firebase.database.ktx)
+    implementation (libs.firebase.auth.ktx)
+
 }
