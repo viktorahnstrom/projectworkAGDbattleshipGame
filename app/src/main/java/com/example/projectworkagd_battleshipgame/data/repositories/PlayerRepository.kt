@@ -21,7 +21,7 @@ class PlayerRepository (private val firebaseService: FirebaseService) {
     fun createPlayer(name: String) {
         val player = Player(
             name = name,
-            isOnline = true
+            online = true
         )
         firebaseService.createPlayer(player)
         _currentPlayer.value = player

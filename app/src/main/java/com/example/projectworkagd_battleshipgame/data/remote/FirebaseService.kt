@@ -25,7 +25,7 @@ class FirebaseService {
 
     fun observePlayers(onPlayersUpdate: (List<Player>) -> Unit) {
         db.collection("players")
-            .whereEqualTo("isOnline", true)
+            .whereEqualTo("online", true)
             .addSnapshotListener { snapshot, e ->
                 if (e != null) {
                     Log.e("FirebaseService", "Listen failed", e)
@@ -38,9 +38,9 @@ class FirebaseService {
             }
     }
 
-    fun updatePlayerStatus(playerId: String, isOnline: Boolean) {
+    fun updatePlayerStatus(playerId: String, online: Boolean) {
         db.collection("players").document(playerId)
-            .update("isOnline", isOnline)
+            .update("online", online)
             .addOnFailureListener { e ->
                 Log.e("FirebaseService", "Error updating player status", e)
             }
@@ -148,25 +148,5 @@ class FirebaseService {
             }
     }
 
-    fun handlePlayerExit(playerId: String) {
-        db.collection("challenges")
-            .whereEqualTo("fromPlayerId", playerId)
-            .get()
-            .addOnSuccessListener { challenges ->
-                challenges.forEach { it.reference.delete() }
-                removePlayer(playerId)
-            }
-    }
 
-    fun removePlayer(playerId: String) {
-        db.collection("players").document(playerId)
-            .get()
-            .addOnSuccessListener { document ->
-                document.toObject(Player::class.java)?.let { player ->
-                    player.currentGameId?.let { deleteGame(it) }
-                }
-                document.reference.delete()
-                Log.d("FirebaseService", "Player removed: $playerId")
-            }
-    }
 }
