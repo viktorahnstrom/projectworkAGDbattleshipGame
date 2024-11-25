@@ -4,7 +4,11 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.navigation.NavHost
+import androidx.compose.runtime.Composable
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.example.projectworkagd_battleshipgame.ui.screens.GameScreen
 import com.example.projectworkagd_battleshipgame.ui.screens.LobbyScreen
 import com.example.projectworkagd_battleshipgame.ui.screens.PreparationScreen
 import com.example.projectworkagd_battleshipgame.ui.theme.ProjectworkAGDbattleshipGameTheme
@@ -25,18 +29,23 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             ProjectworkAGDbattleshipGameTheme {
-                val navController = rememberNavController()
-                NavHost(navController = navController, startDestination = "lobby") {
-                    composable("lobby") {
-                        LobbyScreen(navController, lobbyViewModel)
-                    }
-                    composable("preparation") {
-                        PreparationScreen(navController, preparationViewModel)
-                    }
-                    composable("game") {
-                        GameScreen(navController, gameViewModel)
-                    }
-                }
+                NavigationComponent()
+            }
+        }
+    }
+
+    @Composable
+    private fun NavigationComponent() {
+        val navController = rememberNavController()
+        NavHost(navController = navController, startDestination = "lobby") {
+            composable("lobby") {
+                LobbyScreen(navController, lobbyViewModel)
+            }
+            composable("preparation") {
+                PreparationScreen(navController, preparationViewModel)
+            }
+            composable("game") {
+                GameScreen(navController, gameViewModel)
             }
         }
     }

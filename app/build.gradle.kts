@@ -65,5 +65,6 @@ dependencies {
     implementation (libs.firebase.database.ktx)
     implementation (libs.firebase.auth.ktx)
     implementation (libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.navigation.compose)
 
 }
