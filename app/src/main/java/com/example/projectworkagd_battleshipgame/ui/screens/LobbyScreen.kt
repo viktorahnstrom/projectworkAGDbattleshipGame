@@ -42,6 +42,7 @@ import com.example.projectworkagd_battleshipgame.ui.theme.BlueColor
 import com.example.projectworkagd_battleshipgame.ui.theme.ErrorRed
 import com.example.projectworkagd_battleshipgame.ui.viewmodels.LobbyViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 
 @Composable
 fun BattleshipsBackground (

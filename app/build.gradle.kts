@@ -53,6 +53,7 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.firebase.common.ktx)
     implementation(libs.play.services.games)
+    implementation(libs.androidx.navigation.runtime.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

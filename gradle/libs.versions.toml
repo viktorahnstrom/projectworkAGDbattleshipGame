@@ -12,6 +12,7 @@ composeBom = "2024.04.01"
 firebaseCommonKtx = "21.0.0"
 lifecycleViewmodelCompose = "2.8.7"
 playServicesGames = "23.2.0"
+navigationRuntimeKtx = "2.8.4"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -34,6 +35,7 @@ androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 firebase-common-ktx = { group = "com.google.firebase", name = "firebase-common-ktx", version.ref = "firebaseCommonKtx" }
 play-services-games = { group = "com.google.android.gms", name = "play-services-games", version.ref = "playServicesGames" }
+androidx-navigation-runtime-ktx = { group = "androidx.navigation", name = "navigation-runtime-ktx", version.ref = "navigationRuntimeKtx" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

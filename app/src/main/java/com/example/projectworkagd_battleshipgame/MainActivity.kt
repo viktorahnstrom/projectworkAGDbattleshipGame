@@ -3,45 +3,41 @@ package com.example.projectworkagd_battleshipgame
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.activity.viewModels
+import androidx.navigation.NavHost
+import com.example.projectworkagd_battleshipgame.ui.screens.LobbyScreen
+import com.example.projectworkagd_battleshipgame.ui.screens.PreparationScreen
 import com.example.projectworkagd_battleshipgame.ui.theme.ProjectworkAGDbattleshipGameTheme
+import com.example.projectworkagd_battleshipgame.ui.viewmodels.GameViewModel
+import com.example.projectworkagd_battleshipgame.ui.viewmodels.LobbyViewModel
+import com.example.projectworkagd_battleshipgame.ui.viewmodels.PreparationViewModel
+import com.google.firebase.Firebase
+import com.google.firebase.initialize
 
 class MainActivity : ComponentActivity() {
+    private val gameViewModel: GameViewModel by viewModels()
+    private val lobbyViewModel: LobbyViewModel by viewModels()
+    private val preparationViewModel: PreparationViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        Firebase.initialize(this)
+
         setContent {
             ProjectworkAGDbattleshipGameTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android!",
-                        modifier = Modifier.padding(innerPadding)
-                    )
+                val navController = rememberNavController()
+                NavHost(navController = navController, startDestination = "lobby") {
+                    composable("lobby") {
+                        LobbyScreen(navController, lobbyViewModel)
+                    }
+                    composable("preparation") {
+                        PreparationScreen(navController, preparationViewModel)
+                    }
+                    composable("game") {
+                        GameScreen(navController, gameViewModel)
+                    }
                 }
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    ProjectworkAGDbattleshipGameTheme {
-        Greeting("Android")
     }
 }

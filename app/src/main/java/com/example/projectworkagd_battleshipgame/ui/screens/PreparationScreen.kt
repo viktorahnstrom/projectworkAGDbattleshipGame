@@ -27,6 +27,7 @@ import com.example.projectworkagd_battleshipgame.ui.theme.BlueColor
 import com.example.projectworkagd_battleshipgame.ui.viewmodels.PreparationViewModel
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.example.projectworkagd_battleshipgame.ui.components.BoardGrid
 
 
