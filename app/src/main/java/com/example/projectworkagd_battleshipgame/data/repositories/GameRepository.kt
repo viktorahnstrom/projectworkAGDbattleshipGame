@@ -1,6 +1,8 @@
 package com.example.projectworkagd_battleshipgame.data.repositories
 
 import androidx.compose.ui.input.pointer.PointerEventType.Companion.Move
+import com.example.projectworkagd_battleshipgame.data.models.GameStatus
+import com.example.projectworkagd_battleshipgame.data.models.Move
 import com.example.projectworkagd_battleshipgame.data.remote.FirebaseService
 import com.google.android.gms.games.Game
 import kotlinx.coroutines.flow.MutableStateFlow

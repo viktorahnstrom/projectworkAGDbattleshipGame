@@ -1,0 +1,18 @@
+package com.example.projectworkagd_battleshipgame.data.models
+
+enum class GameStatus {
+    SETUP,
+    IN_PROGRESS,
+    FINISHED
+}
+
+data class Game (
+    val id: String = java.util.UUID.randomUUID().toString(),
+    val player1Id: String,
+    val player2Id: String,
+    val status: GameStatus,
+    val currentTurn: String = player1Id,
+    val board1: Board? = null,
+    val board2: Board? = null,
+    val winner: String? = null
+)
