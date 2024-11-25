@@ -1,10 +1,9 @@
 package com.example.projectworkagd_battleshipgame.data.repositories
 
-import androidx.compose.ui.input.pointer.PointerEventType.Companion.Move
+import com.example.projectworkagd_battleshipgame.data.models.Game
 import com.example.projectworkagd_battleshipgame.data.models.GameStatus
 import com.example.projectworkagd_battleshipgame.data.models.Move
 import com.example.projectworkagd_battleshipgame.data.remote.FirebaseService
-import com.google.android.gms.games.Game
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,10 +28,11 @@ class GameRepository(private val firebaseService: FirebaseService) {
     }
 
     fun makeMove(gameId: String, x: Int, y: Int, playerId: String) {
-        val move = mapOf(
+        val currentGame = _currentGame.value ?: return
+        val move = mapOf<String, Any>(
             "lastMove" to Move(x, y, playerId),
-            "currentTurn" to if (_currentGame.value?.currentTurn == playerId)
-                _currentGame.value?.player2Id else _currentGame.value?.player1Id
+            "currentTurn" to (if (currentGame.currentTurn == playerId)
+                currentGame.player2Id else currentGame.player1Id ?: "")
         )
         firebaseService.updateGameState(gameId, move)
     }
