@@ -54,6 +54,7 @@ dependencies {
     implementation(libs.firebase.common.ktx)
     implementation(libs.play.services.games)
     implementation(libs.androidx.navigation.runtime.ktx)
+    implementation(libs.firebase.firestore.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

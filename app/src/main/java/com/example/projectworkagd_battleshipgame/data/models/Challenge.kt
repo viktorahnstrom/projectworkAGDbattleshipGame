@@ -1,6 +1,5 @@
 package com.example.projectworkagd_battleshipgame.data.models
 
-import com.google.firebase.Timestamp
 import java.util.UUID
 
 data class Challenge(

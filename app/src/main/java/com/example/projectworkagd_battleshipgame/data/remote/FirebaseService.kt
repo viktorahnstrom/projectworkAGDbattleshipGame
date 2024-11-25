@@ -1,62 +1,172 @@
 package com.example.projectworkagd_battleshipgame.data.remote
 
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
 import android.util.Log
+import com.example.projectworkagd_battleshipgame.data.models.Challenge
 import com.example.projectworkagd_battleshipgame.data.models.Game
+import com.example.projectworkagd_battleshipgame.data.models.GameStatus
 import com.example.projectworkagd_battleshipgame.data.models.Player
-import com.google.firebase.Firebase
-import com.google.firebase.auth.auth
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.ValueEventListener
-import com.google.firebase.database.database
-
+import java.util.UUID
 
 class FirebaseService {
-    private val database = Firebase.database.reference
-    private val auth = Firebase.auth
+    private val db = Firebase.firestore
 
     fun createPlayer(player: Player) {
-        database.child("players").child(player.id).setValue(player)
+        db.collection("players").document(player.id)
+            .set(player)
+            .addOnSuccessListener {
+                Log.d("FirebaseService", "Player created: ${player.id}")
+            }
+            .addOnFailureListener { e ->
+                Log.e("FirebaseService", "Error creating player", e)
+            }
     }
 
     fun observePlayers(onPlayersUpdate: (List<Player>) -> Unit) {
-        database.child("players").addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val players = snapshot.children.mapNotNull {
-                    it.getValue(Player::class.java)
+        db.collection("players")
+            .whereEqualTo("isOnline", true)
+            .addSnapshotListener { snapshot, e ->
+                if (e != null) {
+                    Log.e("FirebaseService", "Listen failed", e)
+                    return@addSnapshotListener
                 }
+                val players = snapshot?.documents?.mapNotNull {
+                    it.toObject(Player::class.java)
+                } ?: emptyList()
                 onPlayersUpdate(players)
             }
-
-            override fun onCancelled(error: DatabaseError) {
-                Log.e("FirebaseService", "Players observation failed: ${error.message}")
-            }
-        })
     }
 
     fun updatePlayerStatus(playerId: String, isOnline: Boolean) {
-        database.child("players").child(playerId).child("isOnline").setValue(isOnline)
+        db.collection("players").document(playerId)
+            .update("isOnline", isOnline)
+            .addOnFailureListener { e ->
+                Log.e("FirebaseService", "Error updating player status", e)
+            }
+    }
+
+    fun createChallenge(fromPlayerId: String, toPlayerId: String) {
+        val challenge = Challenge(
+            id = UUID.randomUUID().toString(),
+            fromPlayerId = fromPlayerId,
+            toPlayerId = toPlayerId,
+            timestamp = System.currentTimeMillis()
+        )
+        db.collection("challenges").document(challenge.id)
+            .set(challenge)
+    }
+
+    fun observeChallenges(playerId: String, onChallengesUpdate: (List<Challenge>) -> Unit) {
+        db.collection("challenges")
+            .whereEqualTo("toPlayerId", playerId)
+            .addSnapshotListener { snapshot, e ->
+                if (e != null) {
+                    Log.e("FirebaseService", "Challenge listen failed", e)
+                    return@addSnapshotListener
+                }
+                val challenges = snapshot?.documents?.mapNotNull {
+                    it.toObject(Challenge::class.java)
+                } ?: emptyList()
+                onChallengesUpdate(challenges)
+            }
+    }
+
+    fun deleteChallenge(challengeId: String) {
+        db.collection("challenges").document(challengeId)
+            .delete()
+            .addOnSuccessListener {
+                Log.d("FirebaseService", "Challenge deleted: $challengeId")
+            }
     }
 
     fun createGame(game: Game) {
-        database.child("games").child(game.id).setValue(game)
+        db.collection("games").document(game.id)
+            .set(game)
+            .addOnSuccessListener {
+                Log.d("FirebaseService", "Game created: ${game.id}")
+                updatePlayerGameId(game.player1Id, game.id)
+                updatePlayerGameId(game.player2Id, game.id)
+            }
+            .addOnFailureListener { e ->
+                Log.e("FirebaseService", "Error creating game", e)
+            }
+    }
+
+    private fun updatePlayerGameId(playerId: String, gameId: String?) {
+        db.collection("players").document(playerId)
+            .update("currentGameId", gameId)
     }
 
     fun observeGame(gameId: String, onUpdate: (Game) -> Unit) {
-        database.child("games").child(gameId)
-            .addValueEventListener(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val game = snapshot.getValue(Game::class.java)
-                    game?.let { onUpdate(it) }
+        db.collection("games").document(gameId)
+            .addSnapshotListener { snapshot, e ->
+                if (e != null) {
+                    Log.e("FirebaseService", "Game listen failed", e)
+                    return@addSnapshotListener
                 }
-
-                override fun onCancelled(error: DatabaseError) {
-                    Log.e("FirebaseService", "Game observation failed: ${error.message}")
-                }
-            })
+                snapshot?.toObject(Game::class.java)?.let { onUpdate(it) }
+            }
     }
 
     fun updateGameState(gameId: String, updates: Map<String, Any>) {
-        database.child("games").child(gameId).updateChildren(updates)
+        db.collection("games").document(gameId)
+            .update(updates)
+            .addOnSuccessListener {
+                Log.d("FirebaseService", "Game state updated: $gameId")
+            }
+            .addOnFailureListener { e ->
+                Log.e("FirebaseService", "Error updating game state", e)
+            }
+    }
+
+    fun handleGameOver(gameId: String, winnerId: String) {
+        db.collection("games").document(gameId)
+            .update(mapOf(
+                "status" to GameStatus.FINISHED,
+                "winner" to winnerId
+            ))
+            .addOnSuccessListener {
+                deleteGame(gameId)
+            }
+    }
+
+    fun handleChallengeAccepted(challengeId: String, gameId: String) {
+        deleteChallenge(challengeId)
+    }
+
+    fun deleteGame(gameId: String) {
+        db.collection("games").document(gameId)
+            .get()
+            .addOnSuccessListener { document ->
+                document.toObject(Game::class.java)?.let { game ->
+                    updatePlayerGameId(game.player1Id, null)
+                    updatePlayerGameId(game.player2Id, null)
+                }
+                document.reference.delete()
+                Log.d("FirebaseService", "Game deleted: $gameId")
+            }
+    }
+
+    fun handlePlayerExit(playerId: String) {
+        db.collection("challenges")
+            .whereEqualTo("fromPlayerId", playerId)
+            .get()
+            .addOnSuccessListener { challenges ->
+                challenges.forEach { it.reference.delete() }
+                removePlayer(playerId)
+            }
+    }
+
+    fun removePlayer(playerId: String) {
+        db.collection("players").document(playerId)
+            .get()
+            .addOnSuccessListener { document ->
+                document.toObject(Player::class.java)?.let { player ->
+                    player.currentGameId?.let { deleteGame(it) }
+                }
+                document.reference.delete()
+                Log.d("FirebaseService", "Player removed: $playerId")
+            }
     }
 }
