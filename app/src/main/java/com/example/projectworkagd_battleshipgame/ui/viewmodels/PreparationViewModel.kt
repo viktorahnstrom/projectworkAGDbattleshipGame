@@ -40,6 +40,7 @@ class PreparationViewModel(
 
     private fun isValidPlacement(ship: Ship, x: Int, y: Int, isVertical: Boolean): Boolean {
         // will implement validation logic here
+            if (x + ship.length > board.size) return false
         return true
     }
 
