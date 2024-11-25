@@ -39,14 +39,29 @@ class PreparationViewModel(
     }
 
     private fun isValidPlacement(ship: Ship, x: Int, y: Int, isVertical: Boolean): Boolean {
-        // will implement validation logic here
+        val board = _board.value
+
+        if (isVertical) {
+            if (y + ship.length > board.size) return false
+        } else {
             if (x + ship.length > board.size) return false
+        }
+
+        for (i in 0 until ship.length) {
+            val checkX = if (isVertical) x else x + i
+            val checkY = if (isVertical) y + i else y
+            if (board.cells[checkY][checkX].shipId != null) return false
+        }
         return true
     }
 
     private fun updateBoard(ship: Ship, x: Int, y: Int, isVertical: Boolean) {
         val currentBoard = _board.value
-        // will implement board update logic
+        for (i in 0 until ship.length) {
+            val updateX = if (isVertical) x else x + i
+            val updateY = if (isVertical) y + i else y
+            currentBoard.cells[updateY][updateX].shipId = ship.id
+        }
         _board.value = currentBoard
     }
 
