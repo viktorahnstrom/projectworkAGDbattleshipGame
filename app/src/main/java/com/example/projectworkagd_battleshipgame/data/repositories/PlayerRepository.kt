@@ -29,7 +29,7 @@ class PlayerRepository (private val firebaseService: FirebaseService) {
 
     fun observePlayers() {
         firebaseService.observePlayers { playersList ->
-            _players.value = playersList.filter { it.id != _currentPlayer.value?.id }
+            _players.value = playersList
         }
     }
 

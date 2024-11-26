@@ -165,7 +165,7 @@ fun LobbyScreen(
                         items(players) { player ->
                             PlayerItem(
                                 player = player,
-                                onChallenge = { viewModel.challengePlayer(player.id)}
+                                onChallenge = { viewModel.challengePlayer(player)}
                             )
                         }
                     }
