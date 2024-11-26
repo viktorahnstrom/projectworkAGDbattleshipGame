@@ -1,6 +1,7 @@
 package com.example.projectworkagd_battleshipgame.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
+import com.example.projectworkagd_battleshipgame.data.models.Player
 import com.example.projectworkagd_battleshipgame.data.remote.FirebaseService
 import com.example.projectworkagd_battleshipgame.data.repositories.PlayerRepository
 import com.google.firebase.crashlytics.buildtools.reloc.org.apache.http.auth.ChallengeState
@@ -27,7 +28,7 @@ class LobbyViewModel(
         playerRepository.createPlayer(playerName)
     }
 
-    fun challengePlayer(opponentId: String) {
+    fun challengePlayer(opponent: Player) {
         currentPlayer.value?.let { player ->
             if (player.id != opponent.id) {
                 firebaseService.createChallenge(player.id, opponent.id)
