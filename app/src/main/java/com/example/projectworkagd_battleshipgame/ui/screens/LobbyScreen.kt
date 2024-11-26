@@ -2,6 +2,7 @@ package com.example.projectworkagd_battleshipgame.ui.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -46,6 +47,7 @@ import com.example.projectworkagd_battleshipgame.ui.viewmodels.LobbyViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.projectworkagd_battleshipgame.ui.components.ChallengeDialog
+import com.example.projectworkagd_battleshipgame.ui.theme.YellowColor
 
 @Composable
 fun BattleshipsBackground (
@@ -91,11 +93,7 @@ fun LobbyScreen(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 420.dp, start = 32.dp, end = 32.dp)
-                .background(
-                    color = Color.Black.copy(alpha = 0.4f),
-                    shape = RoundedCornerShape(40.dp)
-                )
+                .padding(top = 380.dp, start = 32.dp, end = 32.dp)
                 .padding(24.dp)
         ) {
             if (!isConnected) {
@@ -153,15 +151,27 @@ fun LobbyScreen(
                     }
                 }
             } else {
-                Column {
-                    Text(
-                        "Online Players",
-                        color = Color.White,
-                        style = MaterialTheme.typography.headlineMedium,
-                        modifier = Modifier.padding(bottom = 16.dp)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.gamelobby),
+                        contentDescription = "Game Lobby Title",
+                        contentScale = ContentScale.Fit,
                     )
-
-                    LazyColumn {
+                }
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .border(4.dp, YellowColor, RoundedCornerShape(8.dp))
+                        .padding(8.dp)
+                ) {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(2.5.dp)
+                    ) {
                         items(players) { player ->
                             PlayerItem(
                                 player = player,
@@ -213,13 +223,12 @@ private fun PlayerItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp)
             .background(
-                color = Color.Black.copy(alpha = 0.4f),
+                color = Color.Black.copy(alpha = 0.6f),
                 shape = RoundedCornerShape(8.dp)
             )
             .clickable { showChallengeConfirmation = true }
-            .padding(8.dp),
+            .padding(16.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
