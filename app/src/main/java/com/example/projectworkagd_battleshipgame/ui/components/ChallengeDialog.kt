@@ -27,12 +27,17 @@ fun ChallengeDialog(
             timeLeft--
         }
         if (timeLeft == 0) {
+            onDismiss()
             onDecline()
+
         }
     }
 
     AlertDialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = {
+            onDismiss()
+            onDecline()
+        },
         title = { Text(if (isSender) "Waiting for response..." else "New Challenge!") },
         text = {
             Text(
@@ -50,7 +55,12 @@ fun ChallengeDialog(
             }
         },
         dismissButton = {
-            Button(onClick = onDecline) {
+            Button(
+                onClick = {
+                    onDismiss()
+                    onDecline()
+                }
+            ) {
                 Text(if (isSender) "Cancel" else "Decline")
             }
         }

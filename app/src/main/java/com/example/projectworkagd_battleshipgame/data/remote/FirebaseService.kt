@@ -1,5 +1,7 @@
 package com.example.projectworkagd_battleshipgame.data.remote
 
+import android.os.Handler
+import android.os.Looper
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import android.util.Log
@@ -55,6 +57,11 @@ class FirebaseService {
         )
         db.collection("challenges").document(challenge.id)
             .set(challenge)
+            .addOnSuccessListener {
+                Handler(Looper.getMainLooper()).postDelayed({
+                    deleteChallenge(challenge.id)
+                }, 30000)
+            }
     }
 
     fun observeChallenges(playerId: String, onChallengesUpdate: (List<Challenge>) -> Unit) {
@@ -69,6 +76,13 @@ class FirebaseService {
                     it.toObject(Challenge::class.java)
                 } ?: emptyList()
                 onChallengesUpdate(challenges)
+
+                val currentTime = System.currentTimeMillis()
+                challenges.forEach { challenge ->
+                    if (currentTime - challenge.timestamp > 30000) {
+                        deleteChallenge(challenge.id)
+                    }
+                }
             }
     }
 

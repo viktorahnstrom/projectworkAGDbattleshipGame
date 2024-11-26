@@ -1,12 +1,14 @@
 package com.example.projectworkagd_battleshipgame.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.projectworkagd_battleshipgame.data.models.Player
 import com.example.projectworkagd_battleshipgame.data.remote.FirebaseService
 import com.example.projectworkagd_battleshipgame.data.repositories.PlayerRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import java.util.UUID
 
 class LobbyViewModel(
@@ -43,15 +45,22 @@ class LobbyViewModel(
     }
 
     fun declineChallenge(challengeId: String) {
-        firebaseService.deleteChallenge(challengeId)
-        _challengeState.value = null
+        currentPlayer.value?.let { player ->
+            firebaseService.observeChallenges(player.id) { challenges ->
+                challenges.find { it.id == challengeId }?.let {
+                    firebaseService.deleteChallenge(it.id)
+                }
+            }
+        }
     }
 
     private fun observeChallenges() {
-        currentPlayer.value?.let { player ->
-            firebaseService.observeChallenges(player.id) { challenges ->
-                challenges.firstOrNull()?.let { challenge ->
-                    _challengeState.value = ChallengeState.Receiving(challenge.id, challenge.fromPlayerId)
+        viewModelScope.launch {
+            currentPlayer.value?.let { player ->
+                firebaseService.observeChallenges(player.id) { challenges ->
+                    challenges.firstOrNull()?.let { challenge ->
+                        _challengeState.value = ChallengeState.Receiving(challenge.id, challenge.fromPlayerId)
+                    }
                 }
             }
         }
