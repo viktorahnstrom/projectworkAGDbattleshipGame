@@ -187,13 +187,17 @@ fun LobbyScreen(
     challengeState?.let { state ->
         when (state) {
             is LobbyViewModel.ChallengeState.Sending -> {
-                ChallengeDialog(
-                    challengerName = state.opponentName,
-                    isSender = true,
-                    onAccept = { /* not used here */ },
-                    onDecline = { viewModel.declineChallenge(state.challengeId) },
-                    onDismiss = { viewModel.declineChallenge(state.challengeId) }
-                )
+                if (state.accepted) {
+                    navController.navigate("preparation")
+                } else {
+                    ChallengeDialog(
+                        challengerName = state.opponentName,
+                        isSender = true,
+                        onAccept = { /* not used here */ },
+                        onDecline = { viewModel.declineChallenge(state.challengeId) },
+                        onDismiss = { viewModel.declineChallenge(state.challengeId) }
+                    )
+                }
             }
             is LobbyViewModel.ChallengeState.Receiving -> {
                 ChallengeDialog(

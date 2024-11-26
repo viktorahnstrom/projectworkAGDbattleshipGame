@@ -153,7 +153,19 @@ class FirebaseService {
     }
 
     fun handleChallengeAccepted(challengeId: String, gameId: String) {
-        deleteChallenge(challengeId)
+        val updates = mapOf(
+            "status" to "accepted",
+            "gameId" to gameId
+        )
+
+        db.collection("challenges").document(challengeId)
+            .update(updates)
+            .addOnSuccessListener {
+                Log.d("FirebaseService", "Challenge accepted with gameId: $gameId")
+            }
+            .addOnFailureListener { e ->
+                Log.e("FirebaseService", "Error updating challenge status", e)
+            }
     }
 
     fun deleteGame(gameId: String) {

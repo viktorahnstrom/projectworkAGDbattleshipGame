@@ -55,19 +55,21 @@ class LobbyViewModel(
             currentPlayer.collect { player ->
                 player?.let { currentPlayer ->
                     firebaseService.observeChallenges(currentPlayer.id) { challenges ->
-                        val receivedChallenge = challenges.firstOrNull { it.toPlayerId == currentPlayer.id }
-                        val sentChallenge = challenges.firstOrNull { it.fromPlayerId == currentPlayer.id }
-
-                        when {
-                            receivedChallenge != null -> {
-                                _challengeState.value = ChallengeState.Receiving(receivedChallenge.id, receivedChallenge.fromPlayerId)
+                        challenges.firstOrNull()?.let { challenge ->
+                            when {
+                                challenge.toPlayerId == currentPlayer.id -> {
+                                    _challengeState.value = ChallengeState.Receiving(challenge.id, challenge.fromPlayerId)
+                                }
+                                challenge.fromPlayerId == currentPlayer.id -> {
+                                    _challengeState.value = ChallengeState.Sending(
+                                        challenge.id,
+                                        players.value.find { it.id == challenge.toPlayerId }?.name ?: "Unknown",
+                                        challenge.status == "accepted"
+                                    )
+                                }
                             }
-                            sentChallenge != null -> {
-                                _challengeState.value = ChallengeState.Sending(sentChallenge.id, players.value.find { it.id == sentChallenge.toPlayerId }?.name ?: "Unknown")
-                            }
-                            else -> {
-                                _challengeState.value = null
-                            }
+                        } ?: run {
+                            _challengeState.value = null
                         }
                     }
                 }
@@ -76,7 +78,7 @@ class LobbyViewModel(
     }
 
     sealed class ChallengeState {
-        data class Sending(val challengeId: String, val opponentName: String) : ChallengeState()
+        data class Sending(val challengeId: String, val opponentName: String, val accepted: Boolean = false) : ChallengeState()
         data class Receiving(val challengeId: String, val challengerId: String): ChallengeState()
     }
 
