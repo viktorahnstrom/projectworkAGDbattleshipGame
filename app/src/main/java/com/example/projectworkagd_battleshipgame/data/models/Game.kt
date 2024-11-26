@@ -10,6 +10,8 @@ data class Game (
     val id: String = java.util.UUID.randomUUID().toString(),
     val player1Id: String,
     val player2Id: String,
+    val player1Ready: Boolean = false,
+    val player2Ready: Boolean = false,
     val status: GameStatus,
     val currentTurn: String = player1Id,
     val board1: Board? = null,

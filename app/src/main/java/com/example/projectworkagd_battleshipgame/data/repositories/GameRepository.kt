@@ -12,6 +12,18 @@ class GameRepository(private val firebaseService: FirebaseService) {
     private val _currentGame = MutableStateFlow<Game?>(null)
     val currentGame: StateFlow<Game?> = _currentGame.asStateFlow()
 
+    private var currentPlayerId: String? = null
+
+    fun getCurrentPlayerId(): String? = currentPlayerId
+
+    fun setCurrentPlayerId(playerId: String) {
+        currentPlayerId = playerId
+    }
+
+    fun updateGameState(gameId: String, updates: Map<String, Any>) {
+        firebaseService.updateGameState(gameId, updates)
+    }
+
     fun createGame(player1Id: String, player2Id: String) {
         val newGame = Game(
             player1Id = player1Id,
@@ -21,11 +33,14 @@ class GameRepository(private val firebaseService: FirebaseService) {
         firebaseService.createGame(newGame)
     }
 
-    fun observeGame(gameId: String) {
+    fun observeGame(gameId: String, onUpdate: (Game) -> Unit) {
         firebaseService.observeGame(gameId) { game ->
             _currentGame.value = game
+            onUpdate(game)
         }
     }
+
+
 
     fun makeMove(gameId: String, x: Int, y: Int, playerId: String) {
         val currentGame = _currentGame.value ?: return
@@ -35,5 +50,24 @@ class GameRepository(private val firebaseService: FirebaseService) {
                 currentGame.player2Id else currentGame.player1Id ?: "")
         )
         firebaseService.updateGameState(gameId, move)
+    }
+
+    fun setPlayerReady(playerId: String) {
+        _currentGame.value?.let { game ->
+            val updates = when (playerId) {
+                game.player1Id -> mapOf("player1Ready" to true)
+                game.player2Id -> mapOf("player2Ready" to true)
+                else -> return
+            }
+            firebaseService.updateGameState(game.id, updates)
+        }
+    }
+
+    fun observePlayersReadyStatus(onReadyUpdate: (Boolean, Boolean) -> Unit) {
+        _currentGame.value?.let { game ->
+            firebaseService.observeGame(game.id) { updatedGame ->
+                onReadyUpdate(updatedGame.player1Ready, updatedGame.player2Ready)
+            }
+        }
     }
 }
