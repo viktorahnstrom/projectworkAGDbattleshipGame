@@ -45,13 +45,8 @@ class LobbyViewModel(
     }
 
     fun declineChallenge(challengeId: String) {
-        currentPlayer.value?.let { player ->
-            firebaseService.observeChallenges(player.id) { challenges ->
-                challenges.find { it.id == challengeId }?.let {
-                    firebaseService.deleteChallenge(it.id)
-                }
-            }
-        }
+        firebaseService.deleteChallenge(challengeId)
+        _challengeState.value = null
     }
 
     private fun observeChallenges() {
@@ -59,7 +54,11 @@ class LobbyViewModel(
             currentPlayer.value?.let { player ->
                 firebaseService.observeChallenges(player.id) { challenges ->
                     challenges.firstOrNull()?.let { challenge ->
-                        _challengeState.value = ChallengeState.Receiving(challenge.id, challenge.fromPlayerId)
+                        if (challenge.toPlayerId == player.id) {
+                            _challengeState.value = ChallengeState.Receiving(challenge.id, challenge.fromPlayerId)
+                        }
+                    } ?: run {
+                        _challengeState.value = null
                     }
                 }
             }
