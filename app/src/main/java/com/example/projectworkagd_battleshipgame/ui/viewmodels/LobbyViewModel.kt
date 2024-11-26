@@ -55,12 +55,17 @@ class LobbyViewModel(
             currentPlayer.collect { player ->
                 player?.let { currentPlayer ->
                     firebaseService.observeChallenges(currentPlayer.id) { challenges ->
-                        challenges.firstOrNull()?.let { challenge ->
-                            if (challenge.toPlayerId == currentPlayer.id) {
-                                _challengeState.value = ChallengeState.Receiving(challenge.id, challenge.fromPlayerId)
+                        val receivedChallenge = challenges.firstOrNull { it.toPlayerId == currentPlayer.id }
+                        val sentChallenge = challenges.firstOrNull { it.fromPlayerId == currentPlayer.id }
+
+                        when {
+                            receivedChallenge != null -> {
+                                _challengeState.value = ChallengeState.Receiving(receivedChallenge.id, receivedChallenge.fromPlayerId)
                             }
-                        } ?: run {
-                            if (_challengeState.value is ChallengeState.Receiving) {
+                            sentChallenge != null -> {
+                                _challengeState.value = ChallengeState.Sending(sentChallenge.id, players.value.find { it.id == sentChallenge.toPlayerId }?.name ?: "Unknown")
+                            }
+                            else -> {
                                 _challengeState.value = null
                             }
                         }

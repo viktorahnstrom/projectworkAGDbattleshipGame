@@ -9,6 +9,8 @@ import com.example.projectworkagd_battleshipgame.data.models.Challenge
 import com.example.projectworkagd_battleshipgame.data.models.Game
 import com.example.projectworkagd_battleshipgame.data.models.GameStatus
 import com.example.projectworkagd_battleshipgame.data.models.Player
+import com.google.firebase.firestore.FirebaseFirestoreException
+import com.google.firebase.firestore.QuerySnapshot
 import java.util.UUID
 
 class FirebaseService {
@@ -66,24 +68,29 @@ class FirebaseService {
 
     fun observeChallenges(playerId: String, onChallengesUpdate: (List<Challenge>) -> Unit) {
         db.collection("challenges")
+            .whereEqualTo("fromPlayerId", playerId)
+            .addSnapshotListener { snapshot, e ->
+                handleChallengeSnapshot(snapshot, e, onChallengesUpdate)
+            }
+
+        db.collection("challenges")
             .whereEqualTo("toPlayerId", playerId)
             .addSnapshotListener { snapshot, e ->
-                if (e != null) {
-                    Log.e("FirebaseService", "Challenge listen failed", e)
-                    return@addSnapshotListener
-                }
-                val challenges = snapshot?.documents?.mapNotNull {
-                    it.toObject(Challenge::class.java)
-                } ?: emptyList()
-                onChallengesUpdate(challenges)
-
-                val currentTime = System.currentTimeMillis()
-                challenges.forEach { challenge ->
-                    if (currentTime - challenge.timestamp > 30000) {
-                        deleteChallenge(challenge.id)
-                    }
-                }
+                handleChallengeSnapshot(snapshot, e, onChallengesUpdate)
             }
+    }
+
+    private fun handleChallengeSnapshot(snapshot: QuerySnapshot?, e: FirebaseFirestoreException?, onChallengesUpdate: (List<Challenge>) -> Unit) {
+        if (e != null) {
+            Log.e("FirebaseService", "Challenge listen failed", e)
+            return
+        }
+
+        val challenges = snapshot?.documents?.mapNotNull {
+            it.toObject(Challenge::class.java)
+        } ?: emptyList()
+
+        onChallengesUpdate(challenges)
     }
 
     fun deleteChallenge(challengeId: String) {
