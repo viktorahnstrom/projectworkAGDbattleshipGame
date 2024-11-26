@@ -26,6 +26,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -188,7 +189,13 @@ fun LobbyScreen(
         when (state) {
             is LobbyViewModel.ChallengeState.Sending -> {
                 if (state.accepted) {
-                    navController.navigate("preparation")
+                    DisposableEffect(Unit) {
+                        navController.navigate("preparation") {
+                            popUpTo("lobby") { inclusive = true }
+                            launchSingleTop = true
+                        }
+                        onDispose { }
+                    }
                 } else {
                     ChallengeDialog(
                         challengerName = state.opponentName,

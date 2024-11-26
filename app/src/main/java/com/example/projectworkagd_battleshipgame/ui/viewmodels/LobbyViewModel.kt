@@ -50,6 +50,8 @@ class LobbyViewModel(
         _challengeState.value = null
     }
 
+    private var hasNavigated = false
+
     private fun observeChallenges() {
         viewModelScope.launch {
             currentPlayer.collect { player ->
@@ -61,15 +63,25 @@ class LobbyViewModel(
                                     _challengeState.value = ChallengeState.Receiving(challenge.id, challenge.fromPlayerId)
                                 }
                                 challenge.fromPlayerId == currentPlayer.id -> {
-                                    _challengeState.value = ChallengeState.Sending(
-                                        challenge.id,
-                                        players.value.find { it.id == challenge.toPlayerId }?.name ?: "Unknown",
-                                        challenge.status == "accepted"
-                                    )
+                                    if (challenge.status == "accepted" && !hasNavigated) {
+                                        hasNavigated = true
+                                        _challengeState.value = ChallengeState.Sending(
+                                            challenge.id,
+                                            players.value.find { it.id == challenge.toPlayerId }?.name ?: "Unknown",
+                                            true
+                                        )
+                                    } else if (challenge.status != "accepted") {
+                                        _challengeState.value = ChallengeState.Sending(
+                                            challenge.id,
+                                            players.value.find { it.id == challenge.toPlayerId }?.name ?: "Unknown",
+                                            false
+                                        )
+                                    }
                                 }
                             }
                         } ?: run {
                             _challengeState.value = null
+                            hasNavigated = false
                         }
                     }
                 }

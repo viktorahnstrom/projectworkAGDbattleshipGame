@@ -153,18 +153,17 @@ class FirebaseService {
     }
 
     fun handleChallengeAccepted(challengeId: String, gameId: String) {
-        val updates = mapOf(
+        val batch = db.batch()
+        val challengeRef = db.collection("challenges").document(challengeId)
+
+        batch.update(challengeRef, mapOf(
             "status" to "accepted",
             "gameId" to gameId
-        )
+        ))
 
-        db.collection("challenges").document(challengeId)
-            .update(updates)
+        batch.commit()
             .addOnSuccessListener {
                 Log.d("FirebaseService", "Challenge accepted with gameId: $gameId")
-            }
-            .addOnFailureListener { e ->
-                Log.e("FirebaseService", "Error updating challenge status", e)
             }
     }
 
