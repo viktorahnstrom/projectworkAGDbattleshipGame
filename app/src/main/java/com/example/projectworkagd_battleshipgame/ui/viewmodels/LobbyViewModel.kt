@@ -52,14 +52,18 @@ class LobbyViewModel(
 
     private fun observeChallenges() {
         viewModelScope.launch {
-            currentPlayer.value?.let { player ->
-                firebaseService.observeChallenges(player.id) { challenges ->
-                    challenges.firstOrNull()?.let { challenge ->
-                        if (challenge.toPlayerId == player.id) {
-                            _challengeState.value = ChallengeState.Receiving(challenge.id, challenge.fromPlayerId)
+            currentPlayer.collect { player ->
+                player?.let { currentPlayer ->
+                    firebaseService.observeChallenges(currentPlayer.id) { challenges ->
+                        challenges.firstOrNull()?.let { challenge ->
+                            if (challenge.toPlayerId == currentPlayer.id) {
+                                _challengeState.value = ChallengeState.Receiving(challenge.id, challenge.fromPlayerId)
+                            }
+                        } ?: run {
+                            if (_challengeState.value is ChallengeState.Receiving) {
+                                _challengeState.value = null
+                            }
                         }
-                    } ?: run {
-                        _challengeState.value = null
                     }
                 }
             }
