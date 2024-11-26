@@ -32,8 +32,9 @@ class LobbyViewModel(
     fun challengePlayer(opponent: Player) {
         currentPlayer.value?.let { player ->
             if (player.id != opponent.id) {
-                firebaseService.createChallenge(player.id, opponent.id)
-                _challengeState.value = ChallengeState.Sending(opponent.name)
+                val challengeId = UUID.randomUUID().toString()
+                firebaseService.createChallenge(player.id, opponent.id, challengeId)
+                _challengeState.value = ChallengeState.Sending(challengeId, opponent.name)
             }
         }
     }
@@ -66,7 +67,7 @@ class LobbyViewModel(
     }
 
     sealed class ChallengeState {
-        data class Sending(val opponentName: String) : ChallengeState()
+        data class Sending(val challengeId: String, val opponentName: String) : ChallengeState()
         data class Receiving(val challengeId: String, val challengerId: String): ChallengeState()
     }
 

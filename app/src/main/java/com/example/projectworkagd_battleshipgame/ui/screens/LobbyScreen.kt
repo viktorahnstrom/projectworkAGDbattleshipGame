@@ -181,8 +181,8 @@ fun LobbyScreen(
                     challengerName = state.opponentName,
                     isSender = true,
                     onAccept = { /* not used here */ },
-                    onDecline = { viewModel.declineChallenge(state.opponentName) },
-                    onDismiss = { viewModel.declineChallenge(state.opponentName) }
+                    onDecline = { viewModel.declineChallenge(state.challengeId) },
+                    onDismiss = { viewModel.declineChallenge(state.challengeId) }
                 )
             }
             is LobbyViewModel.ChallengeState.Receiving -> {

@@ -48,9 +48,9 @@ class FirebaseService {
             }
     }
 
-    fun createChallenge(fromPlayerId: String, toPlayerId: String) {
+    fun createChallenge(fromPlayerId: String, toPlayerId: String, challengeId: String) {
         val challenge = Challenge(
-            id = UUID.randomUUID().toString(),
+            id = challengeId,
             fromPlayerId = fromPlayerId,
             toPlayerId = toPlayerId,
             timestamp = System.currentTimeMillis()
