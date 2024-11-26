@@ -50,6 +50,11 @@ fun PreparationScreen(
     val isReady by viewModel.isReady.collectAsState()
     val bothPlayersReady by viewModel.bothPlayersReady.collectAsState()
 
+    LaunchedEffect(bothPlayersReady) {
+        if (bothPlayersReady) {
+            navController.navigate("game")
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -143,12 +148,6 @@ fun PreparationScreen(
                         if (isReady) "Waiting for other player..." else "Ready Up!",
                         modifier = Modifier.padding(vertical = 8.dp)
                     )
-                }
-            }
-
-            LaunchedEffect(bothPlayersReady) {
-                if (bothPlayersReady) {
-                    navController.navigate("game")
                 }
             }
 

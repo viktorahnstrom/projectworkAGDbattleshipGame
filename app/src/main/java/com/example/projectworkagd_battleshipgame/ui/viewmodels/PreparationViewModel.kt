@@ -40,7 +40,12 @@ class PreparationViewModel(
     val currentGame: StateFlow<Game?> = _currentGame.asStateFlow()
 
     init {
-        observePlayersReadyStatus()
+        viewModelScope.launch {
+            gameRepository.currentGame.collect { game ->
+                _currentGame.value = game
+                game?.let { observePlayersReadyStatus() }
+            }
+        }
     }
 
     fun placeShip(ship: Ship, x: Int, y: Int, isVertical: Boolean) {
@@ -61,10 +66,15 @@ class PreparationViewModel(
             if (x + ship.length > board.size) return false
         }
 
-        for (i in 0 until ship.length) {
-            val checkX = if (isVertical) x else x + i
-            val checkY = if (isVertical) y + i else y
-            if (board.cells[checkY][checkX].shipId != null) return false
+        val startX = maxOf(0, x - 1)
+        val endX = minOf(board.size - 1, if (isVertical) x + 1 else x + ship.length)
+        val startY = maxOf(0, y - 1)
+        val endY = minOf(board.size - 1, if (isVertical) y + ship.length else y + 1)
+
+        for (checkY in startY..endY) {
+            for (checkX in startX..endX) {
+                if (board.cells[checkY][checkX].shipId != null) return false
+            }
         }
         return true
     }
