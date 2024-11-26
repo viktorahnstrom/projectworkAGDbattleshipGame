@@ -1,20 +1,22 @@
 package com.example.projectworkagd_battleshipgame.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,8 +28,11 @@ import com.example.projectworkagd_battleshipgame.data.models.Ship
 import com.example.projectworkagd_battleshipgame.ui.theme.BlueColor
 import com.example.projectworkagd_battleshipgame.ui.viewmodels.PreparationViewModel
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.projectworkagd_battleshipgame.R
 import com.example.projectworkagd_battleshipgame.ui.components.BoardGrid
 
 
@@ -41,6 +46,11 @@ fun PreparationScreen(
     var selectedShip by remember { mutableStateOf<Ship?>(null) }
     var isVertical by remember { mutableStateOf(false) }
 
+    val allShipsPlaced = ships.all { it.isPlaced }
+    val isReady by viewModel.isReady.collectAsState()
+    val bothPlayersReady by viewModel.bothPlayersReady.collectAsState()
+
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -51,12 +61,14 @@ fun PreparationScreen(
                 .fillMaxSize()
                 .padding(16.dp)
         ) {
-            Text(
-                "Place Your Ships",
-                color = Color.White,
-                style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
+            Image(
+                painter = painterResource(R.drawable.yourboard),
+                contentDescription = "Your Board title",
+                contentScale = ContentScale.Fit,
+
+                )
+
+            Spacer(modifier = Modifier.weight(0.1f))
 
             Box(
                 modifier = Modifier
@@ -103,10 +115,44 @@ fun PreparationScreen(
                 colors = ButtonDefaults.buttonColors(
                     containerColor = BlueColor
                 ),
-                modifier = Modifier.padding(top = 16.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
             ) {
-                Text(if (isVertical) "Horizontal" else "Vertical")
+                Text(
+                    if (isVertical) "Switch to Horizontal" else "Switch to Vertical",
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+
             }
+
+            if (allShipsPlaced) {
+                Button(
+                    onClick = {
+                        viewModel.setReady()
+                    },
+                    enabled = !isReady,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (isReady) Color.Green else BlueColor
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp)
+                ) {
+                    Text(
+                        if (isReady) "Waiting for other player..." else "Ready Up!",
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                }
+            }
+
+            LaunchedEffect(bothPlayersReady) {
+                if (bothPlayersReady) {
+                    navController.navigate("game")
+                }
+            }
+
+            Spacer(modifier = Modifier.weight(0.1f))
         }
     }
 }
