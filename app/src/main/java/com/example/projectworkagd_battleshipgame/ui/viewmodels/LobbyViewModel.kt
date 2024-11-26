@@ -3,12 +3,25 @@ package com.example.projectworkagd_battleshipgame.ui.viewmodels
 import androidx.lifecycle.ViewModel
 import com.example.projectworkagd_battleshipgame.data.remote.FirebaseService
 import com.example.projectworkagd_battleshipgame.data.repositories.PlayerRepository
+import com.google.firebase.crashlytics.buildtools.reloc.org.apache.http.auth.ChallengeState
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import java.util.UUID
 
 class LobbyViewModel(
-    private val playerRepository: PlayerRepository = PlayerRepository(FirebaseService())
+    private val playerRepository: PlayerRepository = PlayerRepository(FirebaseService()),
+    private val firebaseService: FirebaseService = FirebaseService()
 ) : ViewModel() {
     val players = playerRepository.players
     val currentPlayer = playerRepository.currentPlayer
+
+    private val _challengeState = MutableStateFlow<ChallengeState?>(null)
+    val challengeState: StateFlow<ChallengeState?> = _challengeState.asStateFlow()
+
+    init {
+        observeChallenges()
+    }
 
     fun joinLobby(playerName: String) {
         playerRepository.createPlayer(playerName)
@@ -16,13 +29,44 @@ class LobbyViewModel(
 
     fun challengePlayer(opponentId: String) {
         currentPlayer.value?.let { player ->
-            // challenge logic will be implemented
+            if (player.id != opponent.id) {
+                firebaseService.createChallenge(player.id, opponent.id)
+                _challengeState.value = ChallengeState.Sending(opponent.name)
+            }
         }
+    }
+
+    fun acceptChallenge(challengeId: String) {
+        val gameId = UUID.randomUUID().toString()
+        firebaseService.handleChallengeAccepted(challengeId, gameId)
+        _challengeState.value = null
+    }
+
+    fun declineChallenge(challengeId: String) {
+        firebaseService.deleteChallenge(challengeId)
+        _challengeState.value = null
+    }
+
+    private fun observeChallenges() {
+        currentPlayer.value?.let { player ->
+            firebaseService.observeChallenges(player.id) { challenges ->
+                challenges.firstOrNull()?.let { challenge ->
+                    _challengeState.value = ChallengeState.Receiving(challenge.id, challenge.fromPlayerId)
+                }
+            }
+        }
+    }
+
+    sealed class ChallengeState {
+        data class Sending(val opponentName: String) : ChallengeState()
+        data class Receiving(val challengeId: String, val challengerId: String): ChallengeState()
     }
 
     override fun onCleared() {
         super.onCleared()
         playerRepository.cleanup()
     }
+
+
 
 }
