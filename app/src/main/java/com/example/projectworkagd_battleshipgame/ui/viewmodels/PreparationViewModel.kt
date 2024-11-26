@@ -3,6 +3,7 @@ package com.example.projectworkagd_battleshipgame.ui.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.projectworkagd_battleshipgame.data.models.Board
+import com.example.projectworkagd_battleshipgame.data.models.Game
 import com.example.projectworkagd_battleshipgame.data.models.Ship
 import com.example.projectworkagd_battleshipgame.data.remote.FirebaseService
 import com.example.projectworkagd_battleshipgame.data.repositories.GameRepository
@@ -28,6 +29,19 @@ class PreparationViewModel(
 
     private val _board = MutableStateFlow<Board>(Board())
     val board: StateFlow<Board> = _board.asStateFlow()
+
+    private val _isReady = MutableStateFlow(false)
+    val isReady: StateFlow<Boolean> = _isReady.asStateFlow()
+
+    private val _bothPlayersReady = MutableStateFlow(false)
+    val bothPlayersReady: StateFlow<Boolean> = _bothPlayersReady.asStateFlow()
+
+    private val _currentGame = MutableStateFlow<Game?>(null)
+    val currentGame: StateFlow<Game?> = _currentGame.asStateFlow()
+
+    init {
+        observePlayersReadyStatus()
+    }
 
     fun placeShip(ship: Ship, x: Int, y: Int, isVertical: Boolean) {
         viewModelScope.launch {
@@ -70,5 +84,30 @@ class PreparationViewModel(
         val index = currentShips.indexOfFirst { it.id == ship.id }
         currentShips[index] = ship.copy(isPlaced = true)
         _ships.value = currentShips
+    }
+
+    fun setReady() {
+        viewModelScope.launch {
+            _isReady.value = true
+            _currentGame.value?.let { game ->
+                val playerId = gameRepository.getCurrentPlayerId()
+                val updates = if (game.player1Id == playerId) {
+                    mapOf("player1Ready" to true)
+                } else {
+                    mapOf("player2Ready" to true)
+                }
+                gameRepository.updateGameState(game.id, updates)
+            }
+        }
+    }
+
+    private fun observePlayersReadyStatus() {
+        viewModelScope.launch {
+            _currentGame.value?.let { game ->
+                gameRepository.observeGame(game.id) { updatedGame ->
+                    _bothPlayersReady.value = updatedGame.player1Ready && updatedGame.player2Ready
+                }
+            }
+        }
     }
 }
