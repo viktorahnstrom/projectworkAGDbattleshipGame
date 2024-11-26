@@ -55,10 +55,10 @@ private fun BoardCell(
             .aspectRatio(1f)
             .background(
                 color = when {
-                    cell.shipId != null -> BlueColor
-                    else -> Color.White.copy(alpha = 0.3f)
+                    cell.shipId != null -> Color(0XFFc0c6c7)
+                    else -> Color(0XFF57B0C2).copy(alpha = 0.9f)
                 },
-                shape = RoundedCornerShape(4.dp)
+                shape = RoundedCornerShape(16.dp)
             )
             .clickable(onClick = onClick)
     )
