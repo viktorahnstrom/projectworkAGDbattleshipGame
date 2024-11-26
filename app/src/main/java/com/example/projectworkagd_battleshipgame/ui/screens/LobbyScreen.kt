@@ -2,6 +2,7 @@ package com.example.projectworkagd_battleshipgame.ui.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -43,6 +45,7 @@ import com.example.projectworkagd_battleshipgame.ui.theme.ErrorRed
 import com.example.projectworkagd_battleshipgame.ui.viewmodels.LobbyViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.projectworkagd_battleshipgame.ui.components.ChallengeDialog
 
 @Composable
 fun BattleshipsBackground (
@@ -77,8 +80,8 @@ fun LobbyScreen(
     viewModel: LobbyViewModel = viewModel()
 ) {
     val players by viewModel.players.collectAsState()
+    val challengeState by viewModel.challengeState.collectAsState()
     var isConnected by remember { mutableStateOf(false) }
-    val screenState = remember { mutableStateOf("initial") }
     var playerName by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
@@ -170,7 +173,34 @@ fun LobbyScreen(
             }
         }
     }
+
+    challengeState?.let { state ->
+        when (state) {
+            is LobbyViewModel.ChallengeState.Sending -> {
+                ChallengeDialog(
+                    challengerName = state.opponentName,
+                    isSender = true,
+                    onAccept = { /* not used here */ },
+                    onDecline = { viewModel.declineChallenge(state.opponentName) },
+                    onDismiss = { viewModel.declineChallenge(state.opponentName) }
+                )
+            }
+            is LobbyViewModel.ChallengeState.Receiving -> {
+                ChallengeDialog(
+                    challengerName = players.find { it.id == state.challengerId }?.name ?: "Unknown",
+                    isSender = false,
+                    onAccept = {
+                        viewModel.acceptChallenge(state.challengeId)
+                        navController.navigate("preparation")
+                    },
+                    onDecline = { viewModel.declineChallenge(state.challengeId) },
+                    onDismiss = { viewModel.declineChallenge(state.challengeId) }
+                )
+            }
         }
+    }
+}
+
 
 
 @Composable
@@ -178,6 +208,8 @@ private fun PlayerItem(
     player: Player,
     onChallenge: () -> Unit
 ) {
+    var showChallengeConfirmation by remember { mutableStateOf(false) }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -186,19 +218,32 @@ private fun PlayerItem(
                 color = Color.Black.copy(alpha = 0.4f),
                 shape = RoundedCornerShape(8.dp)
             )
+            .clickable { showChallengeConfirmation = true }
             .padding(8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(player.name, color = Color.White)
-        Button(
-            onClick = onChallenge,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = BlueColor,
-                contentColor = Color.White
-            )
-        ) {
-            Text("Challenge")
-        }
+    }
+
+    if (showChallengeConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showChallengeConfirmation = false },
+            title = { Text("Challenge Player") },
+            text =  { Text("Do you want to challenge ${player.name}?") },
+            confirmButton = {
+                Button(onClick = {
+                    onChallenge()
+                    showChallengeConfirmation = false
+                }) {
+                    Text("Challenge")
+                }
+            },
+            dismissButton = {
+                Button(onClick = { showChallengeConfirmation = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
