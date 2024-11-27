@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.projectworkagd_battleshipgame.data.models.Board
 import com.example.projectworkagd_battleshipgame.data.models.Game
+import com.example.projectworkagd_battleshipgame.data.models.GameStatus
 import com.example.projectworkagd_battleshipgame.data.models.Ship
 import com.example.projectworkagd_battleshipgame.data.remote.FirebaseService
 import com.example.projectworkagd_battleshipgame.data.repositories.GameRepository
@@ -15,7 +16,7 @@ import kotlinx.coroutines.launch
 class PreparationViewModel(
     private val gameRepository: GameRepository = GameRepository(FirebaseService())
 ) : ViewModel() {
-    private val _ships = MutableStateFlow<List<Ship>>(
+    private val _ships = MutableStateFlow(
         listOf(
             Ship(length = 4),
             Ship(length = 3),
@@ -27,7 +28,7 @@ class PreparationViewModel(
     )
     val ships: StateFlow<List<Ship>> = _ships.asStateFlow()
 
-    private val _board = MutableStateFlow<Board>(Board())
+    private val _board = MutableStateFlow(Board())
     val board: StateFlow<Board> = _board.asStateFlow()
 
     private val _isReady = MutableStateFlow(false)
@@ -43,7 +44,12 @@ class PreparationViewModel(
         viewModelScope.launch {
             gameRepository.currentGame.collect { game ->
                 _currentGame.value = game
-                game?.let { observePlayersReadyStatus() }
+                game?.let {
+                    // Check if both players are ready and game status has changed
+                    if (game.player1Ready && game.player2Ready && game.status == GameStatus.IN_PROGRESS) {
+                        _bothPlayersReady.value = true
+                    }
+                }
             }
         }
     }
@@ -101,15 +107,29 @@ class PreparationViewModel(
             _isReady.value = true
             _currentGame.value?.let { game ->
                 val playerId = gameRepository.getCurrentPlayerId()
-                val updates = if (game.player1Id == playerId) {
-                    mapOf("player1Ready" to true)
-                } else {
-                    mapOf("player2Ready" to true)
+                playerId?.let {
+                    // Update board first
+                    gameRepository.updateBoard(game.id, playerId, _board.value)
+
+                    // Update ready status
+                    val updates = if (game.player1Id == playerId) {
+                        mapOf("player1Ready" to true)
+                    } else {
+                        mapOf("player2Ready" to true)
+                    }
+                    gameRepository.updateGameState(game.id, updates)
+
+                    // Check if other player is already ready
+                    if ((game.player1Id == playerId && game.player2Ready) ||
+                        (game.player2Id == playerId && game.player1Ready)) {
+                        // Start the game
+                        gameRepository.startGame(game.id)
+                    }
                 }
-                gameRepository.updateGameState(game.id, updates)
             }
         }
     }
+
 
     private fun observePlayersReadyStatus() {
         viewModelScope.launch {

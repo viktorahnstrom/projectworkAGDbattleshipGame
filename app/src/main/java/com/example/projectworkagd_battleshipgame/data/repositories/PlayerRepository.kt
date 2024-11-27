@@ -5,7 +5,7 @@ import com.example.projectworkagd_battleshipgame.data.remote.FirebaseService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import java.lang.Thread.State
+
 
 class PlayerRepository (private val firebaseService: FirebaseService) {
     private val _currentPlayer = MutableStateFlow<Player?>(null)
@@ -27,7 +27,7 @@ class PlayerRepository (private val firebaseService: FirebaseService) {
         _currentPlayer.value = player
     }
 
-    fun observePlayers() {
+    private fun observePlayers() {
         firebaseService.observePlayers { playersList ->
             _players.value = playersList
         }

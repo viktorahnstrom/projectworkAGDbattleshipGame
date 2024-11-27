@@ -1,5 +1,6 @@
 package com.example.projectworkagd_battleshipgame.data.repositories
 
+import com.example.projectworkagd_battleshipgame.data.models.Board
 import com.example.projectworkagd_battleshipgame.data.models.Game
 import com.example.projectworkagd_battleshipgame.data.models.GameStatus
 import com.example.projectworkagd_battleshipgame.data.models.Move
@@ -15,6 +16,23 @@ class GameRepository(private val firebaseService: FirebaseService) {
     private var currentPlayerId: String? = null
 
     fun getCurrentPlayerId(): String? = currentPlayerId
+
+    fun startGame(gameId: String) {
+        firebaseService.updateGameState(gameId, mapOf(
+            "status" to GameStatus.IN_PROGRESS
+        ))
+    }
+
+    fun updateBoard(gameId: String, playerId: String, board: Board) {
+        currentGame.value?.let { game ->
+            val updates = when (playerId) {
+                game.player1Id -> mapOf("board1" to board)
+                game.player2Id -> mapOf("board2" to board)
+                else -> return
+            }
+            firebaseService.updateGameState(gameId, updates)
+        }
+    }
 
     fun setCurrentPlayerId(playerId: String) {
         currentPlayerId = playerId
@@ -44,11 +62,18 @@ class GameRepository(private val firebaseService: FirebaseService) {
 
     fun makeMove(gameId: String, x: Int, y: Int, playerId: String) {
         val currentGame = _currentGame.value ?: return
-        val move = mapOf<String, Any>(
+
+        val nextTurn = if (playerId == currentGame.player1Id) {
+            currentGame.player2Id
+        } else {
+            currentGame.player1Id
+        }
+
+        val move = mapOf(
             "lastMove" to Move(x, y, playerId),
-            "currentTurn" to (if (currentGame.currentTurn == playerId)
-                currentGame.player2Id else currentGame.player1Id ?: "")
+            "currentTurn" to nextTurn
         )
+
         firebaseService.updateGameState(gameId, move)
     }
 

@@ -18,8 +18,8 @@ class GameViewModel(
     private val _gameState = MutableStateFlow(GameState())
     val gameState: StateFlow<GameState> = _gameState.asStateFlow()
 
-    private val _board = MutableStateFlow<Board>(Board())
-    val board: StateFlow<Board> = _board.asStateFlow()
+    private val _board = MutableStateFlow(Board())
+    private val board: StateFlow<Board> = _board.asStateFlow()
 
     fun makeMove(x: Int, y: Int, playerId: String) {
         viewModelScope.launch {

@@ -16,7 +16,7 @@ class LobbyViewModel(
     private val firebaseService: FirebaseService = FirebaseService()
 ) : ViewModel() {
     val players = playerRepository.players
-    val currentPlayer = playerRepository.currentPlayer
+    private val currentPlayer = playerRepository.currentPlayer
 
     private val _challengeState = MutableStateFlow<ChallengeState?>(null)
     val challengeState: StateFlow<ChallengeState?> = _challengeState.asStateFlow()

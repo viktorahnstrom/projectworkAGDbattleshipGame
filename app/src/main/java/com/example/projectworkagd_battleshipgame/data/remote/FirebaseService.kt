@@ -11,7 +11,6 @@ import com.example.projectworkagd_battleshipgame.data.models.GameStatus
 import com.example.projectworkagd_battleshipgame.data.models.Player
 import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.QuerySnapshot
-import java.util.UUID
 
 class FirebaseService {
     private val db = Firebase.firestore
@@ -167,7 +166,7 @@ class FirebaseService {
             }
     }
 
-    fun deleteGame(gameId: String) {
+    private fun deleteGame(gameId: String) {
         db.collection("games").document(gameId)
             .get()
             .addOnSuccessListener { document ->

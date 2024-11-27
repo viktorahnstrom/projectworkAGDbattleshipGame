@@ -15,7 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.projectworkagd_battleshipgame.data.models.Board
 import com.example.projectworkagd_battleshipgame.data.models.Cell
-import com.example.projectworkagd_battleshipgame.ui.theme.BlueColor
+
 
 @Composable
 fun BoardGrid(
