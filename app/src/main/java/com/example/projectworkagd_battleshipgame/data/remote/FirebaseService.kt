@@ -149,6 +149,29 @@ class FirebaseService {
             }
     }
 
+    fun handleChallengeAccepted(challengeId: String, gameId: String) {
+        val batch = db.batch()
+        val challengeRef = db.collection("challenges").document(challengeId)
+
+        batch.update(challengeRef, mapOf(
+            "status" to "accepted",
+            "gameId" to gameId
+        ))
+
+        batch.commit()
+            .addOnSuccessListener {
+                Log.d("FirebaseService", "Challenge accepted with gameId: $gameId")
+            }
+    }
+
+    fun deleteChallenge(challengeId: String) {
+        db.collection("challenges").document(challengeId)
+            .delete()
+            .addOnSuccessListener {
+                Log.d("FirebaseService", "Challenge deleted: $challengeId")
+            }
+    }
+
 
 
     // ===== Game State Management =====
@@ -189,14 +212,6 @@ class FirebaseService {
         } ?: emptyList()
 
         onChallengesUpdate(challenges)
-    }
-
-    private fun deleteChallenge(challengeId: String) {
-        db.collection("challenges").document(challengeId)
-            .delete()
-            .addOnSuccessListener {
-                Log.d("FirebaseService", "Challenge deleted: $challengeId")
-            }
     }
 
     private fun updatePlayerGameId(playerId: String, gameId: String?) {

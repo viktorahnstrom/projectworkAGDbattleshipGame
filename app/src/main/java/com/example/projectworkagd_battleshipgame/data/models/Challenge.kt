@@ -7,5 +7,6 @@ data class Challenge(
     val fromPlayerId: String= "",
     val toPlayerId: String = "",
     val timestamp: Long = 0,
-    val status: String = "pending"
+    val status: String = "pending",
+    val gameId: String? = null
 )
