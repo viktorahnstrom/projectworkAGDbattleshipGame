@@ -14,16 +14,14 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.example.projectworkagd_battleshipgame.R
 import com.example.projectworkagd_battleshipgame.data.models.Player
+import com.example.projectworkagd_battleshipgame.ui.components.*
 import com.example.projectworkagd_battleshipgame.ui.theme.BlueColor
 import com.example.projectworkagd_battleshipgame.ui.theme.ErrorRed
 import com.example.projectworkagd_battleshipgame.ui.viewmodels.LobbyViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
-import com.example.projectworkagd_battleshipgame.ui.components.BattleshipsBackground
-import com.example.projectworkagd_battleshipgame.ui.components.ChallengeDialog
-import com.example.projectworkagd_battleshipgame.ui.components.PlayerList
 
 @Composable
 fun LobbyScreen(
@@ -72,7 +70,7 @@ fun LobbyScreen(
             is LobbyViewModel.ChallengeState.Sending -> {
                 if (state.accepted) {
                     DisposableEffect(Unit) {
-                        navController.navigate("preparation") {
+                        navController.navigate("preparation/${state.gameId}/${viewModel.getCurrentPlayerId()}") {
                             popUpTo("lobby") { inclusive = true }
                             launchSingleTop = true
                         }
@@ -93,8 +91,10 @@ fun LobbyScreen(
                     challengerName = players.find { it.id == state.challengerId }?.name ?: "Unknown",
                     isSender = false,
                     onAccept = {
-                        viewModel.acceptChallenge(state.challengeId)
-                        navController.navigate("preparation")
+                        val gameId = viewModel.acceptChallenge(state.challengeId, state.challengerId)
+                        navController.navigate("preparation/$gameId/${viewModel.getCurrentPlayerId()}") {
+                            popUpTo("lobby") { inclusive = true }
+                        }
                     },
                     onDecline = { viewModel.declineChallenge(state.challengeId) },
                     onDismiss = { viewModel.declineChallenge(state.challengeId) }
