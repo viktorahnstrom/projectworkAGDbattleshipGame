@@ -6,15 +6,21 @@ enum class GameStatus {
     FINISHED
 }
 
-data class Game (
-    val id: String = java.util.UUID.randomUUID().toString(),
-    val player1Id: String,
-    val player2Id: String,
+data class Game(
+    val id: String = "",
+    val player1Id: String = "",
+    val player2Id: String = "",
     val player1Ready: Boolean = false,
     val player2Ready: Boolean = false,
     val status: GameStatus = GameStatus.SETUP,
-    val currentTurn: String = player1Id,
+    var currentTurn: String = "",
     val board1: Board? = null,
     val board2: Board? = null,
     val winner: String? = null
-)
+) {
+    init {
+        if (currentTurn.isEmpty()) {
+            currentTurn = player1Id
+        }
+    }
+}
