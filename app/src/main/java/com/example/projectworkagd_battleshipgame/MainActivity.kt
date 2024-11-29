@@ -5,9 +5,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.runtime.Composable
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.projectworkagd_battleshipgame.ui.screens.GameScreen
 import com.example.projectworkagd_battleshipgame.ui.screens.LobbyScreen
 import com.example.projectworkagd_battleshipgame.ui.screens.PreparationScreen
@@ -38,14 +40,40 @@ class MainActivity : ComponentActivity() {
     private fun NavigationComponent() {
         val navController = rememberNavController()
         NavHost(navController = navController, startDestination = "lobby") {
+            // Lobby Route
             composable("lobby") {
                 LobbyScreen(navController, lobbyViewModel)
             }
-            composable("preparation") {
-                PreparationScreen(navController, preparationViewModel)
+
+            composable(
+                route = "preparation/{gameId}/{playerId}",
+                arguments = listOf(
+                    navArgument("gameId") { type = NavType.StringType },
+                    navArgument("playerId") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val gameId = backStackEntry.arguments?.getString("gameId") ?: ""
+                val playerId = backStackEntry.arguments?.getString("playerId") ?: ""
+                PreparationScreen(
+                    navController = navController,
+                    gameId = gameId,
+                    playerId = playerId
+                )
             }
-            composable("game") {
-                GameScreen(navController, gameViewModel)
+
+            composable(
+                route = "game/{gameId}/{playerId}",
+                arguments = listOf(
+                    navArgument("gameId") { type = NavType.StringType },
+                    navArgument("playerId") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val gameId = backStackEntry.arguments?.getString("gameId") ?: ""
+                val playerId = backStackEntry.arguments?.getString("playerId") ?: ""
+                GameScreen(
+                    navController = navController,
+                    viewModel = GameViewModel(playerId = playerId, gameId = gameId)
+                )
             }
         }
     }
