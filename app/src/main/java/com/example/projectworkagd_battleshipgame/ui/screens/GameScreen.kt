@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavController
 import com.example.projectworkagd_battleshipgame.ui.viewmodels.GameViewModel
 import androidx.compose.ui.Modifier
+import com.example.projectworkagd_battleshipgame.ui.components.BattleshipsBackground
 
 @Composable
 fun GameScreen(

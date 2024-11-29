@@ -36,6 +36,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.projectworkagd_battleshipgame.R
+import com.example.projectworkagd_battleshipgame.ui.components.BattleshipsBackground
 import com.example.projectworkagd_battleshipgame.ui.components.BoardGrid
 
 
