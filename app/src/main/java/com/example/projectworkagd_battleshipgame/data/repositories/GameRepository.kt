@@ -1,5 +1,6 @@
 package com.example.projectworkagd_battleshipgame.data.repositories
 
+import android.util.Log
 import com.example.projectworkagd_battleshipgame.data.models.Board
 import com.example.projectworkagd_battleshipgame.data.models.Game
 import com.example.projectworkagd_battleshipgame.data.models.GameStatus
@@ -10,19 +11,54 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 class GameRepository(private val firebaseService: FirebaseService) {
+    // ===== State Management =====
     private val _currentGame = MutableStateFlow<Game?>(null)
     val currentGame: StateFlow<Game?> = _currentGame.asStateFlow()
-
     private var currentPlayerId: String? = null
 
+    // ===== Player Management =====
     fun getCurrentPlayerId(): String? = currentPlayerId
 
-    fun startGame(gameId: String) {
-        firebaseService.updateGameState(gameId, mapOf(
-            "status" to GameStatus.IN_PROGRESS
-        ))
+    fun setCurrentPlayerId(playerId: String) {
+        currentPlayerId = playerId
     }
 
+    // ===== Game Creation and Retrieval =====
+    fun createGame(gameId: String, player1Id: String, player2Id: String) {
+        Log.d("GameRepository", "Creating game with player1Id: $player1Id, player2Id: $player2Id")
+        val game = Game(
+            id = gameId,
+            player1Id = player1Id,
+            player2Id = player2Id,
+            player1Ready = false,
+            player2Ready = false
+        )
+
+        firebaseService.db.collection("games")
+            .document(gameId)
+            .set(game)
+            .addOnSuccessListener {
+                Log.d("GameRepository", "Game created successfully with ID: $gameId")
+            }
+            .addOnFailureListener { e ->
+                Log.e("GameRepository", "Error creating game", e)
+            }
+    }
+
+    fun getGame(gameId: String, callback: (Game?) -> Unit) {
+        firebaseService.db.collection("games").document(gameId)
+            .get()
+            .addOnSuccessListener { document ->
+                callback(document.toObject(Game::class.java))
+            }
+            .addOnFailureListener { e ->
+                Log.e("GameRepository", "Error getting game", e)
+                callback(null)
+            }
+    }
+
+
+    // ===== Board Management =====
     fun updateBoard(gameId: String, playerId: String, board: Board) {
         currentGame.value?.let { game ->
             val updates = when (playerId) {
@@ -34,32 +70,8 @@ class GameRepository(private val firebaseService: FirebaseService) {
         }
     }
 
-    fun setCurrentPlayerId(playerId: String) {
-        currentPlayerId = playerId
-    }
 
-    fun updateGameState(gameId: String, updates: Map<String, Any>) {
-        firebaseService.updateGameState(gameId, updates)
-    }
-
-    fun createGame(player1Id: String, player2Id: String) {
-        val newGame = Game(
-            player1Id = player1Id,
-            player2Id = player2Id,
-            status = GameStatus.SETUP
-        )
-        firebaseService.createGame(newGame)
-    }
-
-    fun observeGame(gameId: String, onUpdate: (Game) -> Unit) {
-        firebaseService.observeGame(gameId) { game ->
-            _currentGame.value = game
-            onUpdate(game)
-        }
-    }
-
-
-
+    // ===== Game Moves =====
     fun makeMove(gameId: String, x: Int, y: Int, playerId: String) {
         val currentGame = _currentGame.value ?: return
 
@@ -75,24 +87,5 @@ class GameRepository(private val firebaseService: FirebaseService) {
         )
 
         firebaseService.updateGameState(gameId, move)
-    }
-
-    fun setPlayerReady(playerId: String) {
-        _currentGame.value?.let { game ->
-            val updates = when (playerId) {
-                game.player1Id -> mapOf("player1Ready" to true)
-                game.player2Id -> mapOf("player2Ready" to true)
-                else -> return
-            }
-            firebaseService.updateGameState(game.id, updates)
-        }
-    }
-
-    fun observePlayersReadyStatus(onReadyUpdate: (Boolean, Boolean) -> Unit) {
-        _currentGame.value?.let { game ->
-            firebaseService.observeGame(game.id) { updatedGame ->
-                onReadyUpdate(updatedGame.player1Ready, updatedGame.player2Ready)
-            }
-        }
     }
 }
