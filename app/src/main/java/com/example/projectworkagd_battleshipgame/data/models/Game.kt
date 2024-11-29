@@ -12,7 +12,7 @@ data class Game (
     val player2Id: String,
     val player1Ready: Boolean = false,
     val player2Ready: Boolean = false,
-    val status: GameStatus,
+    val status: GameStatus = GameStatus.SETUP,
     val currentTurn: String = player1Id,
     val board1: Board? = null,
     val board2: Board? = null,
