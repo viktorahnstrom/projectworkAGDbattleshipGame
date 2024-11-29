@@ -3,19 +3,9 @@ package com.example.projectworkagd_battleshipgame.ui.screens
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -33,37 +23,49 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.lifecycle.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.projectworkagd_battleshipgame.R
 import com.example.projectworkagd_battleshipgame.ui.components.BattleshipsBackground
 import com.example.projectworkagd_battleshipgame.ui.components.BoardGrid
+import com.example.projectworkagd_battleshipgame.ui.viewmodels.GameViewModel
 
 
 @Composable
 fun PreparationScreen(
     navController: NavController,
-    viewModel: PreparationViewModel = viewModel()
+    gameId: String,
+    playerId: String,
+    preparationViewModel: PreparationViewModel = viewModel(),
+    gameViewModel: GameViewModel = viewModel(
+        factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return GameViewModel(playerId = playerId, gameId = gameId) as T
+            }
+        }
+    )
 ) {
-    val ships by viewModel.ships.collectAsState()
-    val board by viewModel.board.collectAsState()
+    val ships by preparationViewModel.ships.collectAsState()
+    val board by preparationViewModel.board.collectAsState()
     var selectedShip by remember { mutableStateOf<Ship?>(null) }
     var isVertical by remember { mutableStateOf(false) }
+    var hasNavigated by remember { mutableStateOf(false) }
 
-    val allShipsPlaced = ships.all { it.isPlaced }
-    val isReady by viewModel.isReady.collectAsState()
-    val bothPlayersReady by viewModel.bothPlayersReady.collectAsState()
+    val isPlayerReady by gameViewModel.player1Ready.collectAsState()
 
-    LaunchedEffect(bothPlayersReady) {
-        if (bothPlayersReady) {
-            navController.navigate("game")
+    LaunchedEffect(Unit) {
+        gameViewModel.observeGameReadiness {
+            if (!hasNavigated) {
+                hasNavigated = true
+                navController.navigate("game/$gameId/$playerId") {
+                    popUpTo("preparation") { inclusive = true }
+                }
+            }
         }
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-    ) {
+    Box(modifier = Modifier.fillMaxSize()) {
         BattleshipsBackground(showTitle = false)
         Column(
             modifier = Modifier
@@ -75,10 +77,10 @@ fun PreparationScreen(
                 painter = painterResource(R.drawable.yourboard),
                 contentDescription = "Your Board title",
                 contentScale = ContentScale.Fit,
-                modifier =  Modifier
+                modifier = Modifier
                     .align(Alignment.CenterHorizontally)
                     .padding(bottom = 16.dp, top = 32.dp)
-                )
+            )
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -99,7 +101,7 @@ fun PreparationScreen(
                     board = board,
                     onCellClick = { x, y ->
                         selectedShip?.let { ship ->
-                            viewModel.placeShip(ship, x, y, isVertical)
+                            preparationViewModel.placeShip(ship, x, y, isVertical)
                             selectedShip = null
                         }
                     }
@@ -136,41 +138,22 @@ fun PreparationScreen(
 
             Button(
                 onClick = { isVertical = !isVertical },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = BlueColor
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
+                colors = ButtonDefaults.buttonColors(containerColor = BlueColor),
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
             ) {
-                Text(
-                    if (isVertical) "Switch to Horizontal" else "Switch to Vertical",
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-
+                Text(if (isVertical) "Switch to Horizontal" else "Switch to Vertical")
             }
 
-            if (allShipsPlaced) {
-                Button(
-                    onClick = {
-                        viewModel.setReady()
-                    },
-                    enabled = !isReady,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isReady) Color.Green else BlueColor
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp)
-                ) {
-                    Text(
-                        if (isReady) "Waiting for other player..." else "Ready Up!",
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-                }
-            }
+            Spacer(modifier = Modifier.height(16.dp))
 
-            Spacer(modifier = Modifier.weight(0.1f))
+            Button(
+                onClick = {
+                    gameViewModel.markPlayerReady()
+                },
+                enabled = !isPlayerReady
+            ) {
+                Text("Ready")
+            }
         }
     }
 }
