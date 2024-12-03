@@ -14,7 +14,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.projectworkagd_battleshipgame.data.models.Board
-import com.example.projectworkagd_battleshipgame.data.models.Cell
 
 
 @Composable
