@@ -99,6 +99,13 @@ fun LobbyScreen(
                     onDecline = { viewModel.declineChallenge(state.challengeId) },
                     onDismiss = { viewModel.declineChallenge(state.challengeId) }
                 )
+                LaunchedEffect(state.gameId) {
+                    state.gameId?.let { gameId ->
+                        navController.navigate("preparation/$gameId/${viewModel.getCurrentPlayerId()}") {
+                            popUpTo("lobby") { inclusive = true }
+                        }
+                    }
+                }
             }
         }
     }
