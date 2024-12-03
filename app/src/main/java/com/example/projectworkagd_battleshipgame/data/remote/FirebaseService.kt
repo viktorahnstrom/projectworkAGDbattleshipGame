@@ -8,16 +8,15 @@ import android.util.Log
 import com.example.projectworkagd_battleshipgame.data.models.Challenge
 import com.example.projectworkagd_battleshipgame.data.models.Game
 import com.example.projectworkagd_battleshipgame.data.models.GameStatus
+import com.example.projectworkagd_battleshipgame.data.models.Move
 import com.example.projectworkagd_battleshipgame.data.models.Player
 import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.QuerySnapshot
+import kotlinx.coroutines.tasks.await
 
 class FirebaseService {
     val db = Firebase.firestore
-    private var hasNavigated = false
 
-
-    // ===== Player Management =====
     fun createPlayer(player: Player) {
         db.collection("players").document(player.id)
             .set(player)
@@ -55,9 +54,6 @@ class FirebaseService {
             }
     }
 
-
-
-    // ===== Game Management =====
     fun createGame(game: Game) {
         db.collection("games").document(game.id)
             .set(game)
@@ -81,29 +77,31 @@ class FirebaseService {
     }
 
 
-
-    // ===== Game Readiness Management =====
     fun observeGameReadiness(gameId: String, onBothReady: () -> Unit) {
-        if (gameId.isBlank()) return
-
         db.collection("games").document(gameId)
-            .addSnapshotListener { snapshot, e ->
-                if (e != null) {
-                    Log.e("FirebaseService", "Error observing game readiness", e)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    Log.e("FirebaseService", "Game readiness listen failed", error)
                     return@addSnapshotListener
                 }
 
-                val game = snapshot?.toObject(Game::class.java)
-                if (game != null && game.player1Ready && game.player2Ready && !hasNavigated) {
-                    hasNavigated = true
-                    onBothReady()
+                snapshot?.let { doc ->
+                    val player1Ready = doc.getBoolean("player1Ready") ?: false
+                    val player2Ready = doc.getBoolean("player2Ready") ?: false
+                    val status = doc.getString("status")
+
+                    Log.d("FirebaseService", "Game readiness update - P1: $player1Ready, P2: $player2Ready, Status: $status")
+
+                    if (player1Ready && player2Ready && status != "IN_PROGRESS") {
+                        updateGameStatus(gameId, GameStatus.IN_PROGRESS)
+                        Log.d("FirebaseService", "Both players ready, triggering navigation")
+                        onBothReady()
+                    }
                 }
             }
     }
 
-    fun updatePlayerReadiness(gameId: String, playerId: String, isPlayer1: Boolean) {
-        if (gameId.isBlank()) return
-
+    fun updatePlayerReadiness(gameId: String, playerId: String) {
         db.collection("games").document(gameId)
             .get()
             .addOnSuccessListener { document ->
@@ -186,17 +184,46 @@ class FirebaseService {
             }
     }
 
-    fun handleGameOver(gameId: String, winnerId: String) {
+    fun updateGameStatus(gameId: String, status: GameStatus) {
         db.collection("games").document(gameId)
-            .update(mapOf(
-                "status" to GameStatus.FINISHED,
-                "winner" to winnerId
-            ))
+            .update("status", status.toString())
+            .addOnSuccessListener {
+                Log.d("FirebaseService", "Game status updated to: $status")
+            }
+            .addOnFailureListener { e ->
+                Log.e("FirebaseService", "Error updating game status", e)
+            }
     }
 
+    fun handleGameOver(gameId: String, winnerId: String) {
+        db.runTransaction { transaction ->
+            val gameRef = db.collection("games").document(gameId)
+            val snapshot = transaction.get(gameRef)
+            val currentStatus = snapshot.getString("status")
 
+            if (currentStatus == GameStatus.IN_PROGRESS.toString()) {
+                transaction.update(gameRef, mapOf(
+                    "status" to GameStatus.FINISHED.toString(),
+                    "winner" to winnerId
+                ))
+            }
+        }.addOnSuccessListener {
+            Log.d("FirebaseService", "Game over transaction completed successfully")
+        }.addOnFailureListener { e ->
+            Log.e("FirebaseService", "Game over transaction failed", e)
+        }
+    }
 
-    // ===== Private Helper Methods =====
+    suspend fun getGame(gameId: String): Game? {
+        return try {
+            val document = db.collection("games").document(gameId).get().await()
+            document.toObject(Game::class.java)
+        } catch (e: Exception) {
+            Log.e("FirebaseService", "Error getting game", e)
+            null
+        }
+    }
+
     private fun handleChallengeSnapshot(
         snapshot: QuerySnapshot?,
         e: FirebaseFirestoreException?,
@@ -217,5 +244,18 @@ class FirebaseService {
     private fun updatePlayerGameId(playerId: String, gameId: String?) {
         db.collection("players").document(playerId)
             .update("currentGameId", gameId)
+    }
+
+    suspend fun makeMove(gameId: String, x: Int, y: Int, playerId: String) {
+        val move = Move(x, y, playerId)
+        db.collection("games").document(gameId)
+            .collection("moves")
+            .add(move)
+            .addOnSuccessListener {
+                Log.d("FirebaseService", "Move made: ($x, $y) by $playerId")
+            }
+            .addOnFailureListener { e ->
+                Log.e("FirebaseService", "Error making move", e)
+            }
     }
 }
