@@ -77,7 +77,7 @@ class FirebaseService {
     }
 
 
-    fun observeGameReadiness(gameId: String, onBothReady: () -> Unit) {
+    fun observeGameReadiness(gameId: String, callback: (Boolean) -> Unit) {
         db.collection("games").document(gameId)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
@@ -92,10 +92,11 @@ class FirebaseService {
 
                     Log.d("FirebaseService", "Game readiness update - P1: $player1Ready, P2: $player2Ready, Status: $status")
 
+                    callback(player1Ready || player2Ready)
+
                     if (player1Ready && player2Ready && status == GameStatus.SETUP.toString()) {
                         updateGameStatus(gameId, GameStatus.IN_PROGRESS)
                         Log.d("FirebaseService", "Both players ready, triggering navigation")
-                        onBothReady()
                     }
                 }
             }

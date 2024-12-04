@@ -145,8 +145,10 @@ class GameViewModel(
         }
     }
 
-    fun observeGameReadiness(onBothReady: () -> Unit) {
-        firebaseService.observeGameReadiness(gameId, onBothReady)
+    fun observeGameReadiness(callback: (Boolean) -> Unit) {
+        firebaseService.observeGameReadiness(gameId) { isOpponentReady ->
+            callback(isOpponentReady)
+        }
     }
 
     fun makeMove(x: Int, y: Int) {

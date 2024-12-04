@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -47,19 +48,20 @@ fun PreparationScreen(
     var isVertical by remember { mutableStateOf(false) }
     var hasNavigated by remember { mutableStateOf(false) }
     val gameState by gameViewModel.gameState.collectAsState()
+    var isPressed by remember { mutableStateOf(false) }
+    var opponentReady by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        gameViewModel.observeGameReadiness {
-            Log.d("PreparationScreen", "Game readiness callback triggered")
-            if (!hasNavigated) {
-                hasNavigated = true
-                try {
-                    navController.navigate("game/$gameId/$playerId") {
-                        popUpTo("preparation") { inclusive = true }
+        gameViewModel.observeGameReadiness { isOpponentReady ->
+            if (isOpponentReady) {
+                opponentReady = true
+                if (isPressed && gameState.player1Ready && gameState.player2Ready) {
+                    if (!hasNavigated) {
+                        hasNavigated = true
+                        navController.navigate("game/$gameId/$playerId") {
+                            popUpTo("preparation") { inclusive = true }
+                        }
                     }
-                    Log.d("PreparationScreen", "Navigation successful")
-                } catch (e: Exception) {
-                    Log.e("PreparationScreen", "Navigation failed", e)
                 }
             }
         }
@@ -136,29 +138,56 @@ fun PreparationScreen(
                 }
             }
 
-            Button(
-                onClick = { isVertical = !isVertical },
-                colors = ButtonDefaults.buttonColors(containerColor = BlueColor),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-            ) {
-                Text(if (isVertical) "Switch to Horizontal" else "Switch to Vertical")
-            }
+            Spacer(modifier = Modifier.height(24.dp))
 
-            Spacer(modifier = Modifier.height(16.dp))
+            val interactionSource = remember { MutableInteractionSource() }
 
             Button(
                 onClick = {
+                    isPressed = true
                     Log.d("PreparationScreen", "Ready button clicked")
                     gameViewModel.markPlayerReady(gameId, preparationViewModel.board.value.cells)
                     Log.d("PreparationScreen", "markPlayerReady called successfully")
                 },
                 enabled = preparationViewModel.allShipsPlaced,
-                colors = ButtonDefaults.buttonColors(containerColor = BlueColor)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = when {
+                        !preparationViewModel.allShipsPlaced -> Color.Gray.copy(alpha = 0.5f)
+                        isPressed -> Color(0xFF2E7D32)
+                        else -> Color(0xFF4CAF50)
+                    }
+                ),
+                interactionSource = interactionSource,
+                modifier = Modifier
+                    .fillMaxWidth(0.8f)
+                    .height(56.dp)
+                    .padding(horizontal = 16.dp)
             ) {
-                Text("Ready")
+                Text(
+                    "Ready",
+                    style = MaterialTheme.typography.titleMedium
+                )
             }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            if (isPressed) {
+                Text(
+                    text = "Waiting for opponent to be ready...",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            } else if (opponentReady) {
+                Text(
+                    text = "Opponent is ready...",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
@@ -173,15 +202,41 @@ private fun ShipItem(
         modifier = Modifier
             .padding(4.dp)
             .background(
-                color = if (isSelected) BlueColor else Color.Gray,
+                color = when {
+                    ship.isPlaced -> Color(0xFF4CAF50)
+                    isSelected -> BlueColor.copy(alpha = 0.8f)
+                    else -> Color.Gray.copy(alpha = 0.6f)
+                },
                 shape = RoundedCornerShape(8.dp)
             )
             .clickable(enabled = !ship.isPlaced, onClick = onClick)
             .padding(8.dp)
+            .size(40.dp),
+        contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = "${ship.length}",
-            color = Color.White
-        )
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = "${ship.length}",
+                color = Color.White,
+                style = MaterialTheme.typography.titleMedium
+            )
+            if (ship.isPlaced) {
+                Text(
+                    text = "✓",
+                    color = Color.White,
+                    style = MaterialTheme.typography.labelSmall
+                )
+            }
+            if (isSelected && !ship.isPlaced) {
+                Text(
+                    text = "...",
+                    color = Color.White,
+                    style = MaterialTheme.typography.labelSmall
+                )
+            }
+        }
     }
 }
