@@ -1,22 +1,35 @@
 package com.example.projectworkagd_battleshipgame.ui.screens
 
+import android.app.Application
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.projectworkagd_battleshipgame.R
 import com.example.projectworkagd_battleshipgame.ui.components.BattleshipsBackground
 import com.example.projectworkagd_battleshipgame.ui.components.BoardGrid
 import com.example.projectworkagd_battleshipgame.ui.viewmodels.GameViewModel
 import com.example.projectworkagd_battleshipgame.data.models.GameStatus
+import com.example.projectworkagd_battleshipgame.ui.theme.BlueColor
 
 @Composable
 fun GameScreen(
     navController: NavController,
-    viewModel: GameViewModel
+    viewModel: GameViewModel = viewModel(
+        factory = ViewModelProvider.AndroidViewModelFactory.getInstance(LocalContext.current.applicationContext as Application)
+    )
 ) {
     val gameState by viewModel.gameState.collectAsState()
     val myBoard by viewModel.board.collectAsState()
@@ -30,25 +43,37 @@ fun GameScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 64.dp, start = 16.dp, end = 16.dp, bottom = 16.dp),
+                .padding(top = 64.dp, bottom = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text(
-                text = if (isMyTurn) "Your Turn" else "Opponent's Turn",
-                color = Color.White,
-                style = MaterialTheme.typography.headlineMedium
+            Image(
+                painter = painterResource(
+                    id = if (isMyTurn) R.drawable.yourturn else R.drawable.opponentsturn
+                ),
+                contentDescription = if (isMyTurn) "Your Turn" else "Opponent's Turn",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(4.dp)
             )
 
-            Text(
-                text = "Opponent's Board",
-                color = Color.White,
-                style = MaterialTheme.typography.titleMedium
+            Image(
+                painter = painterResource(R.drawable.enemyboard),
+                contentDescription = "Enemy Board"
             )
             Box(
                 modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
+                    .fillMaxWidth(0.8f)
+                    .padding(8.dp)
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color(0xFF001a33).copy(alpha = 0.6f),
+                                Color(0xFF003366).copy(alpha = 0.6f)
+                            )
+                        ),
+                        shape = RoundedCornerShape(16.dp)
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 BoardGrid(
@@ -58,40 +83,57 @@ fun GameScreen(
                             selectedCell = Pair(x, y)
                         }
                     },
-                    selectedCell = selectedCell
+                    selectedCell = selectedCell,
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
 
-            if (selectedCell != null && isMyTurn && gameState.status == GameStatus.IN_PROGRESS) {
-                Button(
-                    onClick = {
-                        val (x, y) = selectedCell!!
-                        viewModel.makeMove(x, y)
-                        selectedCell = null
-                    },
-                    modifier = Modifier.padding(vertical = 8.dp)
-                ) {
-                    Text("Fire!")
-                }
+            Button(
+                onClick = {
+                    val (x, y) = selectedCell!!
+                    viewModel.makeMove(x, y)
+                    selectedCell = null
+                },
+                enabled = selectedCell != null && isMyTurn && gameState.status == GameStatus.IN_PROGRESS,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (selectedCell != null) Color.Red else BlueColor,
+                    disabledContainerColor = BlueColor
+                ),
+                modifier = Modifier
+                    .padding(vertical = 8.dp)
+                    .width(150.dp)
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.fire),
+                    contentDescription = "Fire button",
+                    modifier = Modifier.size(30.dp)
+                )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = "Your Board",
-                color = Color.White,
-                style = MaterialTheme.typography.titleMedium
+            Image(
+                painter = painterResource(R.drawable.yourboard),
+                contentDescription = "Your Board"
             )
             Box(
                 modifier = Modifier
-                    .weight(0.7f)
-                    .fillMaxWidth(),
+                    .fillMaxWidth(0.6f)
+                    .padding(horizontal = 8.dp)
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color(0xFF001a33).copy(alpha = 0.6f),
+                                Color(0xFF003366).copy(alpha = 0.6f)
+                            )
+                        ),
+                        shape = RoundedCornerShape(16.dp)
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 BoardGrid(
                     board = myBoard,
-                    onCellClick = { _, _ ->  },
-                    selectedCell = null
+                    onCellClick = { _, _ -> },
+                    selectedCell = null,
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
 

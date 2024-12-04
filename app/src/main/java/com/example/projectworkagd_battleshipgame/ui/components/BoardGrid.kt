@@ -14,7 +14,8 @@ import com.example.projectworkagd_battleshipgame.data.models.Board
 fun BoardGrid(
     board: Board,
     onCellClick: (Int, Int) -> Unit,
-    selectedCell: Pair<Int, Int>? = null
+    selectedCell: Pair<Int, Int>? = null,
+    modifier: Modifier = Modifier
 ) {
     Column(
         modifier = Modifier
@@ -58,7 +59,6 @@ private fun BoardCell(
         modifier = modifier
             .aspectRatio(1f)
             .padding(1.dp)
-            .border(1.dp, Color.White.copy(alpha = 0.3f))
             .background(backgroundColor)
             .clickable(onClick = onClick)
     )

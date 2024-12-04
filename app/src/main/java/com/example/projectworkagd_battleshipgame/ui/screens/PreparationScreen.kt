@@ -81,7 +81,7 @@ fun PreparationScreen(
                 contentScale = ContentScale.Fit,
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
-                    .padding(bottom = 16.dp, top = 32.dp)
+                    .padding(bottom = 32.dp, top = 96.dp)
             )
 
             Spacer(modifier = Modifier.height(8.dp))
