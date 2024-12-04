@@ -1,36 +1,31 @@
 package com.example.projectworkagd_battleshipgame.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
-import com.example.projectworkagd_battleshipgame.data.models.Ship
-import com.example.projectworkagd_battleshipgame.ui.theme.BlueColor
-import com.example.projectworkagd_battleshipgame.ui.viewmodels.PreparationViewModel
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.lifecycle.*
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.projectworkagd_battleshipgame.R
+import com.example.projectworkagd_battleshipgame.data.models.Ship
 import com.example.projectworkagd_battleshipgame.ui.components.BattleshipsBackground
 import com.example.projectworkagd_battleshipgame.ui.components.BoardGrid
+import com.example.projectworkagd_battleshipgame.ui.theme.BlueColor
 import com.example.projectworkagd_battleshipgame.ui.viewmodels.GameViewModel
-
+import com.example.projectworkagd_battleshipgame.ui.viewmodels.PreparationViewModel
 
 @Composable
 fun PreparationScreen(
@@ -51,15 +46,20 @@ fun PreparationScreen(
     var selectedShip by remember { mutableStateOf<Ship?>(null) }
     var isVertical by remember { mutableStateOf(false) }
     var hasNavigated by remember { mutableStateOf(false) }
-
-    val isPlayerReady by gameViewModel.player1Ready.collectAsState()
+    val gameState by gameViewModel.gameState.collectAsState()
 
     LaunchedEffect(Unit) {
         gameViewModel.observeGameReadiness {
+            Log.d("PreparationScreen", "Game readiness callback triggered")
             if (!hasNavigated) {
                 hasNavigated = true
-                navController.navigate("game/$gameId/$playerId") {
-                    popUpTo("preparation") { inclusive = true }
+                try {
+                    navController.navigate("game/$gameId/$playerId") {
+                        popUpTo("preparation") { inclusive = true }
+                    }
+                    Log.d("PreparationScreen", "Navigation successful")
+                } catch (e: Exception) {
+                    Log.e("PreparationScreen", "Navigation failed", e)
                 }
             }
         }
@@ -139,7 +139,9 @@ fun PreparationScreen(
             Button(
                 onClick = { isVertical = !isVertical },
                 colors = ButtonDefaults.buttonColors(containerColor = BlueColor),
-                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
             ) {
                 Text(if (isVertical) "Switch to Horizontal" else "Switch to Vertical")
             }
@@ -148,9 +150,12 @@ fun PreparationScreen(
 
             Button(
                 onClick = {
-                    gameViewModel.markPlayerReady()
+                    Log.d("PreparationScreen", "Ready button clicked")
+                    gameViewModel.markPlayerReady(gameId, preparationViewModel.board.value.cells)
+                    Log.d("PreparationScreen", "markPlayerReady called successfully")
                 },
-                enabled = !isPlayerReady
+                enabled = preparationViewModel.allShipsPlaced,
+                colors = ButtonDefaults.buttonColors(containerColor = BlueColor)
             ) {
                 Text("Ready")
             }
