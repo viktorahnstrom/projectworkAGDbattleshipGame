@@ -1,5 +1,6 @@
 package com.example.projectworkagd_battleshipgame.data.repositories
 
+import com.example.projectworkagd_battleshipgame.data.models.Board
 import com.example.projectworkagd_battleshipgame.data.models.Game
 import com.example.projectworkagd_battleshipgame.data.models.GameStatus
 import com.example.projectworkagd_battleshipgame.data.remote.FirebaseService
