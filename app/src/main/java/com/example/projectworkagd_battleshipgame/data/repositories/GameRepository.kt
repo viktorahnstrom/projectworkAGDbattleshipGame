@@ -1,91 +1,86 @@
 package com.example.projectworkagd_battleshipgame.data.repositories
 
-import android.util.Log
-import com.example.projectworkagd_battleshipgame.data.models.Board
 import com.example.projectworkagd_battleshipgame.data.models.Game
 import com.example.projectworkagd_battleshipgame.data.models.GameStatus
-import com.example.projectworkagd_battleshipgame.data.models.Move
 import com.example.projectworkagd_battleshipgame.data.remote.FirebaseService
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import java.util.UUID
 
 class GameRepository(private val firebaseService: FirebaseService) {
-    // ===== State Management =====
-    private val _currentGame = MutableStateFlow<Game?>(null)
-    val currentGame: StateFlow<Game?> = _currentGame.asStateFlow()
-    private var currentPlayerId: String? = null
 
-    // ===== Player Management =====
-    fun getCurrentPlayerId(): String? = currentPlayerId
-
-    fun setCurrentPlayerId(playerId: String) {
-        currentPlayerId = playerId
-    }
-
-    // ===== Game Creation and Retrieval =====
-    fun createGame(gameId: String, player1Id: String, player2Id: String) {
-        Log.d("GameRepository", "Creating game with player1Id: $player1Id, player2Id: $player2Id")
+    suspend fun createGame(playerId: String, challengerId: String, opponentId: String): String {
+        val gameId = UUID.randomUUID().toString()
         val game = Game(
             id = gameId,
-            player1Id = player1Id,
-            player2Id = player2Id,
-            player1Ready = false,
-            player2Ready = false
+            player1Id = playerId,
+            player2Id = opponentId,
+            currentTurn = playerId,
+            status = GameStatus.SETUP
         )
-
-        firebaseService.db.collection("games")
-            .document(gameId)
-            .set(game)
-            .addOnSuccessListener {
-                Log.d("GameRepository", "Game created successfully with ID: $gameId")
-            }
-            .addOnFailureListener { e ->
-                Log.e("GameRepository", "Error creating game", e)
-            }
+        firebaseService.createGame(game)
+        return gameId
     }
 
-    fun getGame(gameId: String, callback: (Game?) -> Unit) {
-        firebaseService.db.collection("games").document(gameId)
-            .get()
-            .addOnSuccessListener { document ->
-                callback(document.toObject(Game::class.java))
-            }
-            .addOnFailureListener { e ->
-                Log.e("GameRepository", "Error getting game", e)
-                callback(null)
-            }
+    suspend fun joinGame(gameId: String, playerId: String): Game {
+        return firebaseService.getGame(gameId) ?: throw IllegalStateException("Game not found")
     }
 
-
-    // ===== Board Management =====
-    fun updateBoard(gameId: String, playerId: String, board: Board) {
-        currentGame.value?.let { game ->
-            val updates = when (playerId) {
-                game.player1Id -> mapOf("board1" to board)
-                game.player2Id -> mapOf("board2" to board)
-                else -> return
-            }
-            firebaseService.updateGameState(gameId, updates)
-        }
+    suspend fun getGame(gameId: String): Game {
+        return firebaseService.getGame(gameId) ?: throw IllegalStateException("Game not found")
     }
 
+    suspend fun makeMove(gameId: String, x: Int, y: Int, playerId: String) {
+        val game = firebaseService.getGame(gameId) ?: throw IllegalStateException("Game not found")
 
-    // ===== Game Moves =====
-    fun makeMove(gameId: String, x: Int, y: Int, playerId: String) {
-        val currentGame = _currentGame.value ?: return
+        val isPlayer1 = playerId == game.player1Id
+        val targetBoardString = if (isPlayer1) game.board2String else game.board1String
+        val targetBoard = targetBoardString?.split(",")?.map { it.toList() }?.toMutableList()
+            ?: throw IllegalStateException("Target board not found")
 
-        val nextTurn = if (playerId == currentGame.player1Id) {
-            currentGame.player2Id
+        val row = targetBoard[y].toMutableList()
+        val wasHit = row[x] == 'S'
+        row[x] = if (wasHit) 'H' else 'M'
+        targetBoard[y] = row
+
+        val updatedBoardString = targetBoard.joinToString(",") { it.joinToString("") }
+
+        val updates = mutableMapOf<String, Any>()
+        if (isPlayer1) {
+            updates["board2String"] = updatedBoardString
         } else {
-            currentGame.player1Id
+            updates["board1String"] = updatedBoardString
         }
 
-        val move = mapOf(
-            "lastMove" to Move(x, y, playerId),
-            "currentTurn" to nextTurn
-        )
+        if (!wasHit) {
+            val nextTurn = if (playerId == game.player1Id) game.player2Id else game.player1Id
+            updates["currentTurn"] = nextTurn
+        }
 
-        firebaseService.updateGameState(gameId, move)
+        firebaseService.updateGameState(gameId, updates)
+    }
+
+    suspend fun markPlayerReady(gameId: String, playerId: String, board: List<List<Board.Cell>>) {
+        val game = firebaseService.getGame(gameId) ?: throw IllegalStateException("Game not found")
+        val updates = mutableMapOf<String, Any>()
+
+        val boardString = board.joinToString(",") { row ->
+            row.joinToString("") { cell ->
+                when (cell.state) {
+                    Board.CellState.EMPTY -> "E"
+                    Board.CellState.SHIP -> "S"
+                    Board.CellState.HIT -> "H"
+                    Board.CellState.MISS -> "M"
+                }
+            }
+        }
+
+        if (playerId == game.player1Id) {
+            updates["board1String"] = boardString
+            updates["player1Ready"] = true
+        } else {
+            updates["board2String"] = boardString
+            updates["player2Ready"] = true
+        }
+
+        firebaseService.updateGameState(gameId, updates)
     }
 }
