@@ -111,7 +111,7 @@ class GameViewModel(
     }
 
     private fun checkWinCondition(game: Game) {
-        if (game.status != GameStatus.IN_PROGRESS) {
+        if (game.status != GameStatus.IN_PROGRESS || game.winner != null) {
             return
         }
 
@@ -128,7 +128,7 @@ class GameViewModel(
 
     private fun handleGameOver(winnerId: String) {
         Log.d("GameViewModel", "Game Over - Winner: $winnerId")
-        if (_gameState.value.status != GameStatus.FINISHED) {
+        if (_gameState.value.status == GameStatus.IN_PROGRESS && _gameState.value.winner == null) {
             firebaseService.handleGameOver(gameId, winnerId)
         }
     }

@@ -92,7 +92,7 @@ class FirebaseService {
 
                     Log.d("FirebaseService", "Game readiness update - P1: $player1Ready, P2: $player2Ready, Status: $status")
 
-                    if (player1Ready && player2Ready && status != "IN_PROGRESS") {
+                    if (player1Ready && player2Ready && status == GameStatus.SETUP.toString()) {
                         updateGameStatus(gameId, GameStatus.IN_PROGRESS)
                         Log.d("FirebaseService", "Both players ready, triggering navigation")
                         onBothReady()
@@ -196,22 +196,20 @@ class FirebaseService {
     }
 
     fun handleGameOver(gameId: String, winnerId: String) {
-        db.runTransaction { transaction ->
-            val gameRef = db.collection("games").document(gameId)
-            val snapshot = transaction.get(gameRef)
-            val currentStatus = snapshot.getString("status")
+        val updates = mapOf(
+            "status" to GameStatus.FINISHED.toString(),
+            "winner" to winnerId,
+            "currentTurn" to ""  // Clear the current turn to prevent further moves
+        )
 
-            if (currentStatus == GameStatus.IN_PROGRESS.toString()) {
-                transaction.update(gameRef, mapOf(
-                    "status" to GameStatus.FINISHED.toString(),
-                    "winner" to winnerId
-                ))
+        db.collection("games").document(gameId)
+            .update(updates)
+            .addOnSuccessListener {
+                Log.d("FirebaseService", "Game over completed successfully")
             }
-        }.addOnSuccessListener {
-            Log.d("FirebaseService", "Game over transaction completed successfully")
-        }.addOnFailureListener { e ->
-            Log.e("FirebaseService", "Game over transaction failed", e)
-        }
+            .addOnFailureListener { e ->
+                Log.e("FirebaseService", "Game over failed", e)
+            }
     }
 
     suspend fun getGame(gameId: String): Game? {
