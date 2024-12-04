@@ -138,7 +138,24 @@ fun PreparationScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(
+                onClick = { isVertical = !isVertical },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = BlueColor.copy(alpha = 0.8f)
+                ),
+                modifier = Modifier
+                    .fillMaxWidth(0.8f)
+                    .height(48.dp)
+            ) {
+                Text(
+                    if (isVertical) "Switch to Horizontal" else "Switch to Vertical",
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
 
             val interactionSource = remember { MutableInteractionSource() }
 

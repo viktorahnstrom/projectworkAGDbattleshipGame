@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -36,6 +37,13 @@ fun GameScreen(
     val opponentBoard by viewModel.opponentBoard.collectAsState()
     val isMyTurn = gameState.currentPlayerId == viewModel.getCurrentPlayerId()
     var selectedCell by remember { mutableStateOf<Pair<Int, Int>?>(null) }
+    var showGameOverDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(gameState.status) {
+        if (gameState.status == GameStatus.FINISHED) {
+            showGameOverDialog = true
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         BattleshipsBackground(showTitle = false)
@@ -137,34 +145,65 @@ fun GameScreen(
                 )
             }
 
-            when (gameState.status) {
-                GameStatus.FINISHED -> {
+            if (gameState.error != null) {
+                Text(
+                    text = gameState.error!!,
+                    color = Color.Red,
+                    modifier = Modifier.padding(8.dp)
+                )
+            }
+        }
+
+        if (showGameOverDialog) {
+            AlertDialog(
+                onDismissRequest = { },
+                title = {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Image(
+                            painter = painterResource(
+                                id = if (gameState.winner == viewModel.getCurrentPlayerId())
+                                    R.drawable.youwon else R.drawable.youlost
+                            ),
+                            contentDescription = if (gameState.winner == viewModel.getCurrentPlayerId())
+                                "Victory Image" else "Defeat Image",
+                            modifier = Modifier
+                                .size(200.dp)
+                                .padding(bottom = 8.dp)
+                        )
+                    }
+                },
+                text = {
                     Text(
                         text = if (gameState.winner == viewModel.getCurrentPlayerId())
-                            "You Won!" else "Game Over - You Lost",
-                        color = Color.White,
-                        style = MaterialTheme.typography.headlineMedium,
-                        modifier = Modifier.padding(8.dp)
+                            "Congratulations, you won the battle!"
+                        else "Better luck next time, admiral!",
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier
+                            .padding(top = 0.dp)
+                            .fillMaxWidth(),
+                        textAlign = TextAlign.Center
                     )
+                },
+                confirmButton = {
                     Button(
-                        onClick = { navController.navigate("lobby") {
-                            popUpTo("lobby") { inclusive = true }
-                        }},
-                        modifier = Modifier.padding(8.dp)
+                        onClick = {
+                            navController.navigate("lobby") {
+                                popUpTo("lobby") { inclusive = true }
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = BlueColor)
                     ) {
                         Text("Return to Lobby")
                     }
-                }
-                else -> {
-                    if (gameState.error != null) {
-                        Text(
-                            text = gameState.error!!,
-                            color = Color.Red,
-                            modifier = Modifier.padding(8.dp)
-                        )
-                    }
-                }
-            }
+                },
+                containerColor = Color(0xFF001a33).copy(alpha = 0.85f),
+                titleContentColor = Color.White,
+                textContentColor = Color.White,
+                shape = RoundedCornerShape(16.dp)
+            )
         }
     }
 }
