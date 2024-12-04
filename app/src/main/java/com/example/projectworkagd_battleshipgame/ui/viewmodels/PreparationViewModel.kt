@@ -1,75 +1,80 @@
 package com.example.projectworkagd_battleshipgame.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.example.projectworkagd_battleshipgame.data.models.Board
 import com.example.projectworkagd_battleshipgame.data.models.Ship
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 
 class PreparationViewModel : ViewModel() {
-    private val _ships = MutableStateFlow(
-        listOf(
-            Ship(length = 4),
-            Ship(length = 3),
-            Ship(length = 3),
-            Ship(length = 2),
-            Ship(length = 2),
-            Ship(length = 1)
-        )
-    )
-    val ships: StateFlow<List<Ship>> = _ships.asStateFlow()
+    private val _board = MutableStateFlow(createEmptyBoard())
+    val board: StateFlow<Board> = _board
 
-    private val _board = MutableStateFlow(Board())
-    val board: StateFlow<Board> = _board.asStateFlow()
+    private val _ships = MutableStateFlow(createInitialShips())
+    val ships: StateFlow<List<Ship>> = _ships
+
+    private val _allShipsPlaced = MutableStateFlow(false)
+    val allShipsPlaced: Boolean
+        get() = _allShipsPlaced.value
+
+    private fun createEmptyBoard(): Board {
+        return Board()
+    }
+
+    private fun createInitialShips(): List<Ship> {
+        return listOf(
+            Ship(length = 4, id = "ship1"),
+            Ship(length = 3, id = "ship2"),
+            Ship(length = 3, id = "ship3"),
+            Ship(length = 2, id = "ship4"),
+            Ship(length = 2, id = "ship5"),
+            Ship(length = 1, id = "ship6")
+        )
+    }
 
     fun placeShip(ship: Ship, x: Int, y: Int, isVertical: Boolean) {
-        viewModelScope.launch {
-            if (isValidPlacement(ship, x, y, isVertical)) {
-                updateBoard(ship, x, y, isVertical)
-                updateShipStatus(ship)
+        if (ship.isPlaced) return
+
+        val newBoard = _board.value.copy()
+        if (canPlaceShip(newBoard, ship, x, y, isVertical)) {
+            for (i in 0 until ship.length) {
+                val posX = if (isVertical) x else x + i
+                val posY = if (isVertical) y + i else y
+                newBoard.cells[posY][posX].state = Board.CellState.SHIP
             }
+
+            val updatedShips = _ships.value.map {
+                if (it.id == ship.id) it.copy(isPlaced = true) else it
+            }
+
+            _board.value = newBoard
+            _ships.value = updatedShips
+            _allShipsPlaced.value = updatedShips.all { it.isPlaced }
         }
     }
 
-    private fun isValidPlacement(ship: Ship, x: Int, y: Int, isVertical: Boolean): Boolean {
-        val board = _board.value
+    private fun canPlaceShip(board: Board, ship: Ship, x: Int, y: Int, isVertical: Boolean): Boolean {
+        val boardSize = board.cells.size
 
         if (isVertical) {
-            if (y + ship.length > board.size) return false
+            if (y + ship.length > boardSize) return false
         } else {
-            if (x + ship.length > board.size) return false
+            if (x + ship.length > boardSize) return false
         }
 
-        val startX = maxOf(0, x - 1)
-        val endX = minOf(board.size - 1, if (isVertical) x + 1 else x + ship.length)
-        val startY = maxOf(0, y - 1)
-        val endY = minOf(board.size - 1, if (isVertical) y + ship.length else y + 1)
+        for (i in -1..ship.length) {
+            for (j in -1..1) {
+                val checkX = if (isVertical) x + j else x + i
+                val checkY = if (isVertical) y + i else y + j
 
-        for (checkY in startY..endY) {
-            for (checkX in startX..endX) {
-                if (board.cells[checkY][checkX].shipId != null) return false
+                if (checkX in 0 until boardSize && checkY in 0 until boardSize) {
+                    if (board.cells[checkY][checkX].state == Board.CellState.SHIP) {
+                        return false
+                    }
+                }
             }
         }
+
         return true
-    }
-
-    private fun updateBoard(ship: Ship, x: Int, y: Int, isVertical: Boolean) {
-        val currentBoard = _board.value
-        for (i in 0 until ship.length) {
-            val updateX = if (isVertical) x else x + i
-            val updateY = if (isVertical) y + i else y
-            currentBoard.cells[updateY][updateX].shipId = ship.id
-        }
-        _board.value = currentBoard
-    }
-
-    private fun updateShipStatus(ship: Ship) {
-        val currentShips = _ships.value.toMutableList()
-        val index = currentShips.indexOfFirst { it.id == ship.id }
-        currentShips[index] = ship.copy(isPlaced = true)
-        _ships.value = currentShips
     }
 }
