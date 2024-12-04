@@ -1,5 +1,6 @@
 package com.example.projectworkagd_battleshipgame.data.repositories
 
+import com.example.projectworkagd_battleshipgame.data.models.Board
 import com.example.projectworkagd_battleshipgame.data.models.Game
 import com.example.projectworkagd_battleshipgame.data.models.GameStatus
 import com.example.projectworkagd_battleshipgame.data.remote.FirebaseService
@@ -7,7 +8,7 @@ import java.util.UUID
 
 class GameRepository(private val firebaseService: FirebaseService) {
 
-    suspend fun createGame(playerId: String, challengerId: String, opponentId: String): String {
+    fun createGame(playerId: String, opponentId: String): String {
         val gameId = UUID.randomUUID().toString()
         val game = Game(
             id = gameId,
@@ -18,14 +19,6 @@ class GameRepository(private val firebaseService: FirebaseService) {
         )
         firebaseService.createGame(game)
         return gameId
-    }
-
-    suspend fun joinGame(gameId: String, playerId: String): Game {
-        return firebaseService.getGame(gameId) ?: throw IllegalStateException("Game not found")
-    }
-
-    suspend fun getGame(gameId: String): Game {
-        return firebaseService.getGame(gameId) ?: throw IllegalStateException("Game not found")
     }
 
     suspend fun makeMove(gameId: String, x: Int, y: Int, playerId: String) {
