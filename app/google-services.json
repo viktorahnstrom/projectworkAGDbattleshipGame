@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "162413344126",
-    "project_id": "battleship-project-250ff",
-    "storage_bucket": "battleship-project-250ff.firebasestorage.app"
+    "project_number": "701748867823",
+    "project_id": "battleship-finished",
+    "storage_bucket": "battleship-finished.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:162413344126:android:27f353c39303a7387c6f2f",
+        "mobilesdk_app_id": "1:701748867823:android:d5191a9f296b3ca849e11a",
         "android_client_info": {
           "package_name": "com.example.projectworkagd_battleshipgame"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyD0NooqeWjjNTfnlX3f-VfzkZ8Xfo3JSMY"
+          "current_key": "AIzaSyCz4ebKP4MMyAkId7VofJhxiKjeujvsXqk"
         }
       ],
       "services": {

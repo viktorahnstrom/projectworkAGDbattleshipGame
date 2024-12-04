@@ -69,7 +69,7 @@ class LobbyViewModel(
                     ?: throw IllegalStateException("Current player is null")
                 Log.d("ViewModel", "Current player ID: $currentPlayerId")
 
-                val gameId = gameRepository.createGame(currentPlayerId, challengeId, challengerId)
+                val gameId = gameRepository.createGame(currentPlayerId, challengeId)
                 Log.d("ViewModel", "Game created successfully with ID: $gameId")
 
                 firebaseService.handleChallengeAccepted(challengeId, gameId)
