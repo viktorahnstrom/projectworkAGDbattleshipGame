@@ -8,6 +8,7 @@ import android.util.Log
 import com.example.projectworkagd_battleshipgame.data.models.Challenge
 import com.example.projectworkagd_battleshipgame.data.models.Game
 import com.example.projectworkagd_battleshipgame.data.models.GameStatus
+import com.example.projectworkagd_battleshipgame.data.models.Move
 import com.example.projectworkagd_battleshipgame.data.models.Player
 import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.QuerySnapshot
@@ -19,6 +20,12 @@ class FirebaseService {
     fun createPlayer(player: Player) {
         db.collection("players").document(player.id)
             .set(player)
+            .addOnSuccessListener {
+                Log.d("FirebaseService", "Player created: ${player.id}")
+            }
+            .addOnFailureListener { e ->
+                Log.e("FirebaseService", "Error creating player", e)
+            }
     }
 
     fun observePlayers(onPlayersUpdate: (List<Player>) -> Unit) {
@@ -39,12 +46,23 @@ class FirebaseService {
     fun updatePlayerStatus(playerId: String, isOnline: Boolean) {
         db.collection("players").document(playerId)
             .update("online", isOnline)
-
+            .addOnSuccessListener {
+                Log.d("FirebaseService", "Updated player $playerId online status to $isOnline")
+            }
+            .addOnFailureListener { e ->
+                Log.e("FirebaseService", "Error updating player status", e)
+            }
     }
 
     fun createGame(game: Game) {
         db.collection("games").document(game.id)
             .set(game)
+            .addOnSuccessListener {
+                Log.d("FirebaseService", "Game successfully created: ${game.id}")
+            }
+            .addOnFailureListener { e ->
+                Log.e("FirebaseService", "Error creating game: ${game.id}", e)
+            }
     }
 
     fun observeGame(gameId: String, onUpdate: (Game) -> Unit) {
@@ -82,6 +100,20 @@ class FirebaseService {
                 }
             }
     }
+
+    fun updatePlayerReadiness(gameId: String, playerId: String) {
+        db.collection("games").document(gameId)
+            .get()
+            .addOnSuccessListener { document ->
+                val game = document.toObject(Game::class.java)
+                if (game != null) {
+                    val readyField = if (game.player1Id == playerId) "player1Ready" else "player2Ready"
+                    db.collection("games").document(gameId)
+                        .update(readyField, true)
+                }
+            }
+    }
+
 
 
     // ===== Challenge Management =====
@@ -125,11 +157,17 @@ class FirebaseService {
         ))
 
         batch.commit()
+            .addOnSuccessListener {
+                Log.d("FirebaseService", "Challenge accepted with gameId: $gameId")
+            }
     }
 
     fun deleteChallenge(challengeId: String) {
         db.collection("challenges").document(challengeId)
             .delete()
+            .addOnSuccessListener {
+                Log.d("FirebaseService", "Challenge deleted: $challengeId")
+            }
     }
 
 
@@ -138,11 +176,23 @@ class FirebaseService {
     fun updateGameState(gameId: String, updates: Map<String, Any>) {
         db.collection("games").document(gameId)
             .update(updates)
+            .addOnSuccessListener {
+                Log.d("FirebaseService", "Game state updated: $gameId")
+            }
+            .addOnFailureListener { e ->
+                Log.e("FirebaseService", "Error updating game state", e)
+            }
     }
 
     fun updateGameStatus(gameId: String, status: GameStatus) {
         db.collection("games").document(gameId)
             .update("status", status.toString())
+            .addOnSuccessListener {
+                Log.d("FirebaseService", "Game status updated to: $status")
+            }
+            .addOnFailureListener { e ->
+                Log.e("FirebaseService", "Error updating game status", e)
+            }
     }
 
     fun handleGameOver(gameId: String, winnerId: String) {
@@ -157,6 +207,10 @@ class FirebaseService {
                     "winner" to winnerId
                 ))
             }
+        }.addOnSuccessListener {
+            Log.d("FirebaseService", "Game over transaction completed successfully")
+        }.addOnFailureListener { e ->
+            Log.e("FirebaseService", "Game over transaction failed", e)
         }
     }
 
@@ -185,5 +239,23 @@ class FirebaseService {
         } ?: emptyList()
 
         onChallengesUpdate(challenges)
+    }
+
+    private fun updatePlayerGameId(playerId: String, gameId: String?) {
+        db.collection("players").document(playerId)
+            .update("currentGameId", gameId)
+    }
+
+    suspend fun makeMove(gameId: String, x: Int, y: Int, playerId: String) {
+        val move = Move(x, y, playerId)
+        db.collection("games").document(gameId)
+            .collection("moves")
+            .add(move)
+            .addOnSuccessListener {
+                Log.d("FirebaseService", "Move made: ($x, $y) by $playerId")
+            }
+            .addOnFailureListener { e ->
+                Log.e("FirebaseService", "Error making move", e)
+            }
     }
 }

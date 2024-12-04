@@ -23,4 +23,30 @@ data class Game(
             currentTurn = player1Id
         }
     }
+
+    val board1: List<List<Board.CellState>>?
+        get() = board1String?.split(",")?.map { row ->
+            row.map { cell ->
+                when (cell) {
+                    'E' -> Board.CellState.EMPTY
+                    'S' -> Board.CellState.SHIP
+                    'H' -> Board.CellState.HIT
+                    'M' -> Board.CellState.MISS
+                    else -> Board.CellState.EMPTY
+                }
+            }
+        }
+
+    val board2: List<List<Board.CellState>>?
+        get() = board2String?.split(",")?.map { row ->
+            row.map { cell ->
+                when (cell) {
+                    'E' -> Board.CellState.EMPTY
+                    'S' -> Board.CellState.SHIP
+                    'H' -> Board.CellState.HIT
+                    'M' -> Board.CellState.MISS
+                    else -> Board.CellState.EMPTY
+                }
+            }
+        }
 }
