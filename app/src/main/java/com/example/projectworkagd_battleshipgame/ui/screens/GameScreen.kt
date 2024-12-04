@@ -24,6 +24,8 @@ import com.example.projectworkagd_battleshipgame.ui.components.BoardGrid
 import com.example.projectworkagd_battleshipgame.ui.viewmodels.GameViewModel
 import com.example.projectworkagd_battleshipgame.data.models.GameStatus
 import com.example.projectworkagd_battleshipgame.ui.theme.BlueColor
+import android.content.Context
+
 
 @Composable
 fun GameScreen(
@@ -39,6 +41,9 @@ fun GameScreen(
     var selectedCell by remember { mutableStateOf<Pair<Int, Int>?>(null) }
     var showGameOverDialog by remember { mutableStateOf(false) }
 
+    viewModel.initializeSoundManager(LocalContext.current)
+
+    // Your existing LaunchedEffect
     LaunchedEffect(gameState.status) {
         if (gameState.status == GameStatus.FINISHED) {
             showGameOverDialog = true

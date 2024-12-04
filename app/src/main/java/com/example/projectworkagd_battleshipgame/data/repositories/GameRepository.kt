@@ -29,7 +29,7 @@ class GameRepository(private val firebaseService: FirebaseService) {
         return firebaseService.getGame(gameId) ?: throw IllegalStateException("Game not found")
     }
 
-    suspend fun makeMove(gameId: String, x: Int, y: Int, playerId: String) {
+    suspend fun makeMove(gameId: String, x: Int, y: Int, playerId: String): Boolean {
         val game = firebaseService.getGame(gameId) ?: throw IllegalStateException("Game not found")
 
         val isPlayer1 = playerId == game.player1Id
@@ -57,6 +57,7 @@ class GameRepository(private val firebaseService: FirebaseService) {
         }
 
         firebaseService.updateGameState(gameId, updates)
+        return wasHit
     }
 
     suspend fun markPlayerReady(gameId: String, playerId: String, board: List<List<Board.Cell>>) {

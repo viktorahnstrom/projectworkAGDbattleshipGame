@@ -1,5 +1,6 @@
 package com.example.projectworkagd_battleshipgame.ui.viewmodels
 
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -7,6 +8,7 @@ import com.example.projectworkagd_battleshipgame.data.models.Board
 import com.example.projectworkagd_battleshipgame.data.models.Game
 import com.example.projectworkagd_battleshipgame.data.models.GameState
 import com.example.projectworkagd_battleshipgame.data.models.GameStatus
+import com.example.projectworkagd_battleshipgame.data.models.SoundManager
 import com.example.projectworkagd_battleshipgame.data.remote.FirebaseService
 import com.example.projectworkagd_battleshipgame.data.repositories.GameRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,6 +22,7 @@ class GameViewModel(
     private val gameRepository: GameRepository = GameRepository(FirebaseService()),
     private val firebaseService: FirebaseService = FirebaseService()
 ) : ViewModel() {
+    private var soundManager: SoundManager? = null
     private val _gameState = MutableStateFlow(GameState())
     val gameState: StateFlow<GameState> = _gameState.asStateFlow()
 
@@ -28,6 +31,10 @@ class GameViewModel(
 
     private val _opponentBoard = MutableStateFlow(Board())
     val opponentBoard: StateFlow<Board> = _opponentBoard.asStateFlow()
+
+    fun initializeSoundManager(context: Context) {
+        soundManager = SoundManager(context)
+    }
 
     init {
         observeGame()
@@ -129,6 +136,11 @@ class GameViewModel(
     private fun handleGameOver(winnerId: String) {
         Log.d("GameViewModel", "Game Over - Winner: $winnerId")
         if (_gameState.value.status == GameStatus.IN_PROGRESS && _gameState.value.winner == null) {
+            if (winnerId == playerId) {
+                soundManager?.playVictorySound()
+            } else {
+                soundManager?.playDefeatSound()
+            }
             firebaseService.handleGameOver(gameId, winnerId)
         }
     }
@@ -167,10 +179,22 @@ class GameViewModel(
         Log.d("GameViewModel", "Making move at ($x, $y)")
         viewModelScope.launch {
             try {
-                gameRepository.makeMove(gameId, x, y, playerId)
+                val wasHit = gameRepository.makeMove(gameId, x, y, playerId)
+                if (wasHit) {
+                    soundManager?.playHitSound()
+                } else {
+                    soundManager?.playMissSound()
+                }
             } catch (e: Exception) {
                 Log.e("GameViewModel", "Error making move", e)
             }
         }
+    }
+
+    // Clean up sound manager in onCleared
+    override fun onCleared() {
+        super.onCleared()
+        soundManager?.release()
+        soundManager = null
     }
 }
