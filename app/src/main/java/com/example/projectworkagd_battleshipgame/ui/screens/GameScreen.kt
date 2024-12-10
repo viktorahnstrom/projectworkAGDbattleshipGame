@@ -24,7 +24,7 @@ import com.example.projectworkagd_battleshipgame.ui.components.BoardGrid
 import com.example.projectworkagd_battleshipgame.ui.viewmodels.GameViewModel
 import com.example.projectworkagd_battleshipgame.data.models.GameStatus
 import com.example.projectworkagd_battleshipgame.ui.theme.BlueColor
-import android.content.Context
+
 
 
 @Composable

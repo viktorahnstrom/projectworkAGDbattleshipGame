@@ -8,7 +8,6 @@ import android.util.Log
 import com.example.projectworkagd_battleshipgame.data.models.Challenge
 import com.example.projectworkagd_battleshipgame.data.models.Game
 import com.example.projectworkagd_battleshipgame.data.models.GameStatus
-import com.example.projectworkagd_battleshipgame.data.models.Move
 import com.example.projectworkagd_battleshipgame.data.models.Player
 import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.QuerySnapshot
@@ -102,18 +101,7 @@ class FirebaseService {
             }
     }
 
-    fun updatePlayerReadiness(gameId: String, playerId: String) {
-        db.collection("games").document(gameId)
-            .get()
-            .addOnSuccessListener { document ->
-                val game = document.toObject(Game::class.java)
-                if (game != null) {
-                    val readyField = if (game.player1Id == playerId) "player1Ready" else "player2Ready"
-                    db.collection("games").document(gameId)
-                        .update(readyField, true)
-                }
-            }
-    }
+
 
 
 
@@ -240,21 +228,4 @@ class FirebaseService {
         onChallengesUpdate(challenges)
     }
 
-    private fun updatePlayerGameId(playerId: String, gameId: String?) {
-        db.collection("players").document(playerId)
-            .update("currentGameId", gameId)
-    }
-
-    suspend fun makeMove(gameId: String, x: Int, y: Int, playerId: String) {
-        val move = Move(x, y, playerId)
-        db.collection("games").document(gameId)
-            .collection("moves")
-            .add(move)
-            .addOnSuccessListener {
-                Log.d("FirebaseService", "Move made: ($x, $y) by $playerId")
-            }
-            .addOnFailureListener { e ->
-                Log.e("FirebaseService", "Error making move", e)
-            }
-    }
 }

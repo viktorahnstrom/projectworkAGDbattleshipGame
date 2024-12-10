@@ -16,14 +16,12 @@ import com.example.projectworkagd_battleshipgame.ui.screens.PreparationScreen
 import com.example.projectworkagd_battleshipgame.ui.theme.ProjectworkAGDbattleshipGameTheme
 import com.example.projectworkagd_battleshipgame.ui.viewmodels.GameViewModel
 import com.example.projectworkagd_battleshipgame.ui.viewmodels.LobbyViewModel
-import com.example.projectworkagd_battleshipgame.ui.viewmodels.PreparationViewModel
 import com.google.firebase.Firebase
 import com.google.firebase.initialize
 
 class MainActivity : ComponentActivity() {
-    private val gameViewModel: GameViewModel by viewModels()
     private val lobbyViewModel: LobbyViewModel by viewModels()
-    private val preparationViewModel: PreparationViewModel by viewModels()
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
