@@ -43,7 +43,6 @@ fun GameScreen(
 
     viewModel.initializeSoundManager(LocalContext.current)
 
-    // Your existing LaunchedEffect
     LaunchedEffect(gameState.status) {
         if (gameState.status == GameStatus.FINISHED) {
             showGameOverDialog = true

@@ -102,10 +102,6 @@ class FirebaseService {
     }
 
 
-
-
-
-    // ===== Challenge Management =====
     fun createChallenge(fromPlayerId: String, toPlayerId: String, challengeId: String) {
         val challenge = Challenge(
             id = challengeId,
@@ -159,9 +155,6 @@ class FirebaseService {
             }
     }
 
-
-
-    // ===== Game State Management =====
     fun updateGameState(gameId: String, updates: Map<String, Any>) {
         db.collection("games").document(gameId)
             .update(updates)
@@ -188,7 +181,7 @@ class FirebaseService {
         val updates = mapOf(
             "status" to GameStatus.FINISHED.toString(),
             "winner" to winnerId,
-            "currentTurn" to ""  // Clear the current turn to prevent further moves
+            "currentTurn" to ""
         )
 
         db.collection("games").document(gameId)

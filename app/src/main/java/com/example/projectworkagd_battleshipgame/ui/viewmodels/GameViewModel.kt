@@ -191,7 +191,6 @@ class GameViewModel(
         }
     }
 
-    // Clean up sound manager in onCleared
     override fun onCleared() {
         super.onCleared()
         soundManager?.release()

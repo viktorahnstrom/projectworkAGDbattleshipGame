@@ -38,7 +38,6 @@ class MainActivity : ComponentActivity() {
     private fun NavigationComponent() {
         val navController = rememberNavController()
         NavHost(navController = navController, startDestination = "lobby") {
-            // Lobby Route
             composable("lobby") {
                 LobbyScreen(navController, lobbyViewModel)
             }
